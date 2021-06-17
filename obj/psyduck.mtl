@@ -1,0 +1,50 @@
+# Blender MTL File: 'None'
+# Material Count: 4
+
+newmtl Body01
+Ns 18.000005
+Ka 1.000000 1.000000 1.000000
+Kd 0.588000 0.588000 0.588000
+Ks 0.000000 0.000000 0.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 1
+map_Kd /Users/lulemair/Downloads/Pokemon XY/Psyduck/Images/pm0054_00_Body1.png
+map_d /Users/lulemair/Downloads/Pokemon XY/Psyduck/Images/pm0054_00_Body1.png
+
+newmtl Eye
+Ns 18.000005
+Ka 1.000000 1.000000 1.000000
+Kd 0.588000 0.588000 0.588000
+Ks 0.000000 0.000000 0.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 1
+map_Kd /Users/lulemair/Downloads/Pokemon XY/Psyduck/Images/pm0054_00_Eye1.png
+map_d /Users/lulemair/Downloads/Pokemon XY/Psyduck/Images/pm0054_00_Eye1.png
+
+newmtl LIris
+Ns 18.000005
+Ka 1.000000 1.000000 1.000000
+Kd 0.588000 0.588000 0.588000
+Ks 0.000000 0.000000 0.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 1
+map_Kd /Users/lulemair/Downloads/Pokemon XY/Psyduck/Images/pm0054_00_Iris2.png
+map_d /Users/lulemair/Downloads/Pokemon XY/Psyduck/Images/pm0054_00_Iris2.png
+
+newmtl RIris
+Ns 18.000005
+Ka 1.000000 1.000000 1.000000
+Kd 0.588000 0.588000 0.588000
+Ks 0.000000 0.000000 0.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 1
+map_Kd /Users/lulemair/Downloads/Pokemon XY/Psyduck/Images/pm0054_00_Iris2.png
+map_d /Users/lulemair/Downloads/Pokemon XY/Psyduck/Images/pm0054_00_Iris2.png
