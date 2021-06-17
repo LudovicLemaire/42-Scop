@@ -45,6 +45,10 @@ typedef struct			s_hook_params
 	float				rotationY;
 	float				rotationZ;
 	float				speed;
+	int					isColored;
+	float				r;
+	float				g;
+	float				b;
 }						t_hook_params;
 
 typedef struct			s_vec
@@ -54,13 +58,22 @@ typedef struct			s_vec
 	float				z;
 }						t_vec;
 
-
-typedef struct			s_global_params
+typedef struct			s_obj_spec
 {
-	t_vec				*vertex;
-	GLfloat				*gl_buffer;
-}						t_global_params;
+	float				x_min;
+	float				x_max;
+	float				x_length;
+	float				x_center;
+	float				y_min;
+	float				y_max;
+	float				y_length;
+	float				y_center;
+	float				z_min;
+	float				z_max;
+	float				z_length;
+	float				z_center;
+}						t_obj_spec;
 
 #endif
 
-void parser(GLfloat **buffer, int *sizeMallocFaces, char *filename);
+void parser(GLfloat **buffer, int *sizeMallocFaces, char *filename, t_obj_spec *mm);

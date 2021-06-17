@@ -25,11 +25,18 @@ const char *vertexShaderSource =
 const char *fragmentShaderSource =
 "#version 330 core\n"
 "out vec4 FragColor;\n"
-"uniform vec4 uColor;\n"
+"uniform vec3 rgb;\n"
+"uniform float isColored;\n"
 "in vec4 vertexColor;\n"
 "void main() {\n"
-"   FragColor = vertexColor;\n"
-"   //FragColor = uColor;\n"
+"   float ambientStrength = 1;\n"
+"   vec3 lightColor = rgb;\n"
+"   vec3 ambient = ambientStrength * lightColor;\n"
+"   vec3 objectColor = vec3(vertexColor.x, vertexColor.y, vertexColor.z);\n"
+"   vec3 result;\n"
+"   if (isColored == 0.0) {result = ambient * vec3(1.0, 1.0, 1.0);}\n"
+"   else {result = ambient * objectColor;}\n"
+"   FragColor = vec4(result, 1.0);\n"
 "}";
 
 t_array_mat m4_mult(t_array_mat a, t_array_mat b)
@@ -69,7 +76,7 @@ int shaderCreateProgram() { // refaire parsershader
     if (!success)
     {
         glGetProgramInfoLog(program, 512, NULL, log);
-        printf("[Program] Linking failed\n%s\n", log);
+        printf("[Vertex shader] Linking failed\n%s\n", log);
         exit(0);
     }
     glShaderSource(fragment, 1, &fragmentShaderSource, NULL);
@@ -78,7 +85,7 @@ int shaderCreateProgram() { // refaire parsershader
     if (!success)
     {
         glGetProgramInfoLog(program, 512, NULL, log);
-        printf("[Program] Linking failed\n%s\n", log);
+        printf("[Fragment shader] Linking failed\n%s\n", log);
         exit(0);
     }
 
@@ -152,9 +159,11 @@ void keyCallback(GLFWwindow *window, t_keys_hook *keys_hook, t_hook_params *hook
     checkKey(window, GLFW_KEY_KP_2, &keys_hook->kp_2);
     checkKey(window, GLFW_KEY_KP_1, &keys_hook->kp_1);
 
+    // exit
     if (keys_hook->escape == 1)
         glfwSetWindowShouldClose(window, GL_TRUE);
 
+    // polygon modes (Filled, Wireframe, Point)
     if (keys_hook->one == 1)
         glPolygonMode( GL_FRONT_AND_BACK, GL_FILL);
     if (keys_hook->two == 1)
@@ -162,14 +171,17 @@ void keyCallback(GLFWwindow *window, t_keys_hook *keys_hook, t_hook_params *hook
     if (keys_hook->three == 1)
         glPolygonMode( GL_FRONT_AND_BACK, GL_POINT);
 
+    // epileptic mode
     if (keys_hook->r == 2) 
         glClearColor(getRC(), getRC(), getRC(), 1);
 
+    // point size
     if (keys_hook->plus == 2) 
         hook_params->pointSize += 0.1;
     if (keys_hook->minus == 2) 
         hook_params->pointSize -= 0.1;
 
+    // translation
     if (keys_hook->w == 2) 
         hook_params->translationZ += hook_params->speed;
     if (keys_hook->s == 2) 
@@ -183,6 +195,7 @@ void keyCallback(GLFWwindow *window, t_keys_hook *keys_hook, t_hook_params *hook
     if (keys_hook->ctrl == 2) 
         hook_params->translationY += hook_params->speed;
 
+    // rotation
     if (keys_hook->kp_7 == 2) 
         hook_params->rotationZ -= hook_params->speed;
     if (keys_hook->kp_9 == 2) 
@@ -195,64 +208,26 @@ void keyCallback(GLFWwindow *window, t_keys_hook *keys_hook, t_hook_params *hook
         hook_params->rotationX += hook_params->speed;
     if (keys_hook->kp_5 == 2) 
         hook_params->rotationX -= hook_params->speed;
+    
+    // light color
+    if (keys_hook->kp_1 == 2) 
+        hook_params->r += 0.01;
+    if (keys_hook->kp_2 == 2) 
+        hook_params->g += 0.01;
+    if (keys_hook->kp_3 == 2) 
+        hook_params->b += 0.01;
 
+    // speed
     if (keys_hook->kp_plus == 1) 
         hook_params->speed += 0.025;
     if (keys_hook->kp_minus == 1) 
         hook_params->speed -= 0.025;
     
-    if (keys_hook->t == 2) {
-        GLfloat g_vertex_buffer_data[] = {
-        -0.75,-0.75,-0.75,getRC(), getRC(), getRC(),
-        -0.75,-0.75, 0.75,getRC(), getRC(), getRC(),
-        -0.75, 0.75, 0.75,getRC(), getRC(), getRC(),
-
-        0.75, 0.75,-0.75, getRC(), getRC(), getRC(),
-        -0.75,-0.75,-0.75,getRC(), getRC(), getRC(),
-        -0.75, 0.75,-0.75,getRC(), getRC(), getRC(),
-
-        0.75,-0.75, 0.75, getRC(), getRC(), getRC(),
-        -0.75,-0.75,-0.75,getRC(), getRC(), getRC(),
-        0.75,-0.75,-0.75, getRC(), getRC(), getRC(),
-
-        0.75, 0.75,-0.75, getRC(), getRC(), getRC(),
-        0.75,-0.75,-0.75, getRC(), getRC(), getRC(),
-        -0.75,-0.75,-0.75,getRC(), getRC(), getRC(),
-        
-        -0.75,-0.75,-0.75,getRC(), getRC(), getRC(),
-        -0.75, 0.75, 0.75,getRC(), getRC(), getRC(),
-        -0.75, 0.75,-0.75,getRC(), getRC(), getRC(),
-
-        0.75,-0.75, 0.75, getRC(), getRC(), getRC(),
-        -0.75,-0.75, 0.75,getRC(), getRC(), getRC(),
-        -0.75,-0.75,-0.75,getRC(), getRC(), getRC(),
-
-        -0.75, 0.75, 0.75,getRC(), getRC(), getRC(),
-        -0.75,-0.75, 0.75,getRC(), getRC(), getRC(),
-        0.75,-0.75, 0.75, getRC(), getRC(), getRC(),
-
-        0.75, 0.75, 0.75, getRC(), getRC(), getRC(),
-        0.75,-0.75,-0.75, getRC(), getRC(), getRC(),
-        0.75, 0.75,-0.75, getRC(), getRC(), getRC(),
-
-        0.75,-0.75,-0.75, getRC(), getRC(), getRC(),
-        0.75, 0.75, 0.75, getRC(), getRC(), getRC(),
-        0.75,-0.75, 0.75, getRC(), getRC(), getRC(),
-
-        0.75, 0.75, 0.75, getRC(), getRC(), getRC(),
-        0.75, 0.75,-0.75, getRC(), getRC(), getRC(),
-        -0.75, 0.75,-0.75,getRC(), getRC(), getRC(),
-
-        0.75, 0.75, 0.75, getRC(), getRC(), getRC(),
-        -0.75, 0.75,-0.75,getRC(), getRC(), getRC(),
-        -0.75, 0.75, 0.75,getRC(), getRC(), getRC(),
-
-        0.75, 0.75, 0.75, getRC(), getRC(), getRC(),
-        -0.75, 0.75, 0.75,getRC(), getRC(), getRC(),
-        0.75,-0.75, 0.75, getRC(), getRC(), getRC(),
-    };
-        glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
-    }
+    // colored mode
+    if (keys_hook->t == 1)
+        hook_params->isColored = 1.0;
+    if (keys_hook->t == -1)
+        hook_params->isColored = 0.0;
 }
 
 
@@ -352,7 +327,7 @@ t_array_mat matriceRotation(float x, float y, float z) {
 
 int main(int ac, char *av[]) {
     if (ac != 2) {
-        printf("\x1b[91mLE NOM DU FICHIER ENCULÉ\x1b[0m\n");
+        printf("\x1b[91mT'AS PAS LINK LE NOM DU FICHIER GROS DÉBILE\x1b[0m\n");
         return 0;
     }
     GLFWwindow* window;
@@ -389,14 +364,12 @@ int main(int ac, char *av[]) {
 
     GLfloat *g_vertex_buffer_data;
     int bufferSize;
-    parser(&g_vertex_buffer_data, &bufferSize, av[1]);
+    t_obj_spec *mm;
+    mm = calloc(1, sizeof(t_obj_spec));
+    parser(&g_vertex_buffer_data, &bufferSize, av[1], mm);
 
     t_keys_hook *keys_hook;
     keys_hook = calloc(1, sizeof(t_keys_hook));
-    keys_hook->r = 0;
-    keys_hook->t = 0;
-    keys_hook->space = 0;
-    keys_hook->escape = 0;
     
     GLuint vertexbuffer;
     GLuint vao;
@@ -409,6 +382,8 @@ int main(int ac, char *av[]) {
 
     // Give our vertices to OpenGL.
     glBufferData(GL_ARRAY_BUFFER, bufferSize * sizeof(float), g_vertex_buffer_data, GL_STATIC_DRAW);
+    free(g_vertex_buffer_data);
+    g_vertex_buffer_data = NULL;
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0); // points
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float))); // couleurs
@@ -423,65 +398,96 @@ int main(int ac, char *av[]) {
     glUseProgram(program);
 
 
-    GLint locUColor = glGetUniformLocation(program, "uColor");
+    GLint locRGB = glGetUniformLocation(program, "rgb");
+    GLint locIsColored = glGetUniformLocation(program, "isColored");
     GLint locMatriceFinal = glGetUniformLocation(program, "matriceFinal");
     GLint locPointSize = glGetUniformLocation(program, "pointSize");
     GLint locMatricePerspective = glGetUniformLocation(program, "matricePerspective");
     t_array_mat mat_scale;
     t_array_mat mat_translation;
+    t_array_mat mat_translation_center;
     t_array_mat mat_rotation;
     t_array_mat mat_final;
     t_array_mat mat_perspective = matrice_perspective(0.00001, 1000.0, 1.0472, 1366.0 / 768.0);
+
+    // rescale
+    float rescale = 1;
+    float y_length = mm->y_length;
+    float x_length = mm->x_length;
+    float z_length = mm->z_length;
+    while ((y_length < 4 || x_length < 10 || z_length < 10) && (y_length < 6 && x_length < 12 && z_length < 12)) {
+        rescale *= 1.1;
+        y_length = mm->y_length *rescale;
+        x_length = mm->x_length *rescale;
+        z_length = mm->z_length *rescale;
+    }
+    while (y_length > 6 || x_length > 12 || z_length > 12) {
+        rescale *= 0.9;
+        y_length = mm->y_length *rescale;
+        x_length = mm->x_length *rescale;
+        z_length = mm->z_length *rescale;
+    }
+
 
     t_hook_params *hook_params;
     hook_params = calloc(1, sizeof(t_hook_params));
     hook_params->pointSize = 1;
     hook_params->translationX = 0;
     hook_params->translationY = 0;
-    hook_params->translationZ = -5;
+    hook_params->translationZ = 0 - 5;
     hook_params->rotationX = 0;
     hook_params->rotationY = 0;
     hook_params->rotationZ = 0;
     hook_params->speed = 0.1;
+    hook_params->r = 1;
+    hook_params->g = 1;
+    hook_params->b = 1;
+    hook_params->isColored = 0.0;
+    mat_translation_center = matriceTranslation(-mm->x_center, -mm->y_center, -mm->z_center);
+    free(mm);
+    mm = NULL;
 
 
     glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
     glPolygonMode( GL_FRONT_AND_BACK, GL_LINE);
-    
-    /* Loop until the user closes the window */
+
+
+    // Loop until the user closes the window
     while (!glfwWindowShouldClose(window)) {
         _update_fps_counter(window);
-        /* Render here */
+        // Render here
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
         glEnable(GL_DEPTH_TEST);
 
         keyCallback(window, keys_hook, hook_params);
       
-        float r = 1;
-        float g = 0;
-        float b = 0;
-        glUniform4f(locUColor, r, g, b, 1);
-
+        glUniform1f(locIsColored, hook_params->isColored);
+        glUniform3f(locRGB, hook_params->r, hook_params->g, hook_params->b);
         glUniform1f(locPointSize, hook_params->pointSize);
 
-        mat_scale = matriceScale(1, 1, 1);
+        mat_scale = matriceScale(rescale, rescale, rescale);
         mat_translation = matriceTranslation(hook_params->translationX, hook_params->translationY,hook_params->translationZ);
         mat_rotation = matriceRotation(hook_params->rotationX, hook_params->rotationY,hook_params->rotationZ);
-        mat_final = m4_mult(m4_mult(mat_scale, mat_rotation), mat_translation);
+        mat_final = m4_mult(m4_mult(mat_translation_center, m4_mult(mat_scale, mat_rotation)), mat_translation);
         glUniformMatrix4fv(locMatriceFinal, 1, GL_FALSE, mat_final.res[0]);
         glUniformMatrix4fv(locMatricePerspective, 1, GL_FALSE, mat_perspective.res[0]);
         // Draw the triangle !
         glDrawArrays(GL_TRIANGLES, 0, bufferSize); // Starting from vertex 0; 3 vertices total -> 1 triangle
 
 
-        /* Swap front and back buffers */
+        // Swap front and back buffers
         glfwSwapBuffers(window);
 
-        /* Poll for and process events */
+        // Poll for and process events
         glfwPollEvents();
     }
 
     glfwTerminate();
+    // free before exit
+    free(keys_hook);
+    keys_hook = NULL;
+    free(hook_params);
+    hook_params = NULL;
     return 0;
 }
