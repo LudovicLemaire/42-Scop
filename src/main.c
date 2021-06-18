@@ -7,44 +7,37 @@
 #include <time.h>
 #include <math.h>
 #include <wow.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <string.h>
 
-const char *vertexShaderSource =
-"#version 330 core\n"
-"layout (location = 0) in vec3 aPos;\n"
-"layout (location = 1) in vec3 aCol;\n"
-"layout (location = 2) in vec3 aNor;\n"
-"out vec3 normal = aNor;\n"
-"out vec4 vertexColor;\n"
-"uniform mat4 matriceFinal;\n"
-"uniform mat4 matricePerspective;\n"
-"uniform float pointSize;\n"
-"void main() {\n"
-"   gl_PointSize = pointSize;\n"
-"   gl_Position = (matricePerspective * matriceFinal ) * vec4(aPos, 1.0);\n"
-"   vertexColor = vec4(aCol, 1.0);\n"
-"}";
+char *shaderParser(char *path) {
+    if (access(path, F_OK ) != 0) {
+        printf("\x1b[91mShader Path\x1b[0m: %s\n", path);
+        exit(-1);
+    } else {
+        printf("\x1b[92mShader Path\x1b[0m: %s\n", path);
+    }
 
-const char *fragmentShaderSource =
-"#version 330 core\n"
-"out vec4 FragColor;\n"
-"uniform vec3 rgb;\n"
-"uniform float isColored;\n"
-"in vec4 vertexColor;\n"
-"in vec3 normal;\n"
-"uniform mat4 matriceFinal;\n"
-"vec3 normalizedNormal = normalize(vec3((matriceFinal) *  vec4(normal, 0)));\n"
-"void main() {\n"
-"   float ambientStrength = 0.15;\n"
-"   vec3 lightColor = rgb;\n"
-"   vec3 ambient = ambientStrength * lightColor;\n"
-"   vec3 objectColor = vec3(vertexColor.x, vertexColor.y, vertexColor.z);\n"
-"   vec3 result;\n"
-"   if (isColored == 0.0) {result = vec3(1.0, 1.0, 1.0);}\n"
-"   else {result = objectColor;}\n"
-"   vec3 lightDirection = vec3(1, -1, -2);\n"
-"   float directionalLightIntensity = max(0.0, dot(normalizedNormal, normalize(-lightDirection.xyz)));\n"
-"   FragColor = vec4(result * (directionalLightIntensity + ambient), 1.0);\n"
-"}";
+    FILE *inputfile = fopen(path, "r");
+    size_t linesize = 0;
+    char* linebuf = 0;
+    ssize_t linelen = 0;
+    struct stat file_info;
+    lstat(path, &file_info);
+    int mallocText = file_info.st_size;
+    char *completeText = calloc(mallocText, sizeof(char));
+
+    while ((linelen = getline(&linebuf, &linesize, inputfile)) > 0) {
+        strcat(completeText, linebuf);
+        free(linebuf);
+        linebuf = NULL;
+    }
+    free(linebuf);
+    linebuf = NULL;
+    return completeText;
+}
 
 t_array_mat m4_mult(t_array_mat a, t_array_mat b)
 {
@@ -73,6 +66,8 @@ int shaderCreateProgram() { // refaire parsershader
     char    log[512];
     int     success;
 
+    const char *vertexShaderSource = shaderParser("shaders/vertexShader.vert");
+    const char *fragmentShaderSource = shaderParser("shaders/fragmentShader.frag");
 
     vertex      = glCreateShader(GL_VERTEX_SHADER);
     fragment    = glCreateShader(GL_FRAGMENT_SHADER);
@@ -466,8 +461,6 @@ int main(int ac, char *av[]) {
 
     glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
     glPolygonMode( GL_FRONT_AND_BACK, GL_LINE);
-
-        printf("%d - %d %d \n", bufferSize, bufferSize / 9, bufferSize / 9 / 3);
     
     // Loop until the user closes the window
     while (!glfwWindowShouldClose(window)) {

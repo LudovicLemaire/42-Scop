@@ -11,4 +11,4 @@ void main() {
    gl_PointSize = pointSize;
    gl_Position = (matricePerspective * matriceFinal ) * vec4(aPos, 1.0);
    vertexColor = vec4(aCol, 1.0);
-};
+}

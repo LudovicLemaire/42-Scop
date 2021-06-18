@@ -1,14 +1,6 @@
 #include <stdio.h>
-#include <errno.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <time.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <dirent.h>
-#include <string.h>
-#include <float.h>
-#include <math.h>
 #include <unistd.h>
 
 int main() {
