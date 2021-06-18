@@ -120,10 +120,10 @@ void setFace(GLfloat **buffer, int *j, int *face_inc, GLfloat x, GLfloat y, GLfl
 void parser(GLfloat **buffer, int *sizeMallocFaces, char *filename, t_obj_spec *mm) {
     srand(time(NULL));
     if (access(filename, F_OK ) != 0 || !EndsWith(filename, ".obj")) {
-        printf("\x1b[91mPath\x1b[0m: %s\n", filename);
+        printf("\x1b[91mObj Path\x1b[0m: %s\n", filename);
         exit(-1);
     } else {
-        printf("\x1b[92mPath\x1b[0m: %s\n", filename);
+        printf("\x1b[92mObj Path\x1b[0m: %s\n", filename);
     }
 
     FILE *inputfile = fopen(filename, "r");
@@ -140,7 +140,7 @@ void parser(GLfloat **buffer, int *sizeMallocFaces, char *filename, t_obj_spec *
     char* linebuf = 0;
     ssize_t linelen = 0;
     float x, y, z;
-    int a_point, a_texture, a_normal, b_point, b_texture, b_normal, c_point, c_texture, c_normal;
+    int a_point, a_texture, a_normal, b_point, b_texture, b_normal, c_point, c_texture, c_normal, d_point, e_point;
     int vertex_inc = 0;
     int face_inc = 0;
 
@@ -192,6 +192,33 @@ void parser(GLfloat **buffer, int *sizeMallocFaces, char *filename, t_obj_spec *
             setFace(buffer, &j, &face_inc, vertex[b_point-1].x, vertex[b_point-1].y, vertex[b_point-1].z, rgb, normal);
             setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgb, normal);
         }
+        if (sscanf(linebuf, "f %d %d %d %d", &a_point, &b_point, &c_point, &d_point) == 4) {
+            t_vec normal = getNormal(vertex[a_point-1], vertex[b_point-1], vertex[c_point-1]);
+            setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgb, normal);
+            setFace(buffer, &j, &face_inc, vertex[b_point-1].x, vertex[b_point-1].y, vertex[b_point-1].z, rgb, normal);
+            setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgb, normal);
+
+            normal = getNormal(vertex[a_point-1], vertex[c_point-1], vertex[d_point-1]);
+            setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgb, normal);
+            setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgb, normal);
+            setFace(buffer, &j, &face_inc, vertex[d_point-1].x, vertex[d_point-1].y, vertex[d_point-1].z, rgb, normal);
+        }
+        if (sscanf(linebuf, "f %d %d %d %d %d", &a_point, &b_point, &c_point, &d_point, &e_point) == 5) {
+            t_vec normal = getNormal(vertex[a_point-1], vertex[b_point-1], vertex[c_point-1]);
+            setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgb, normal);
+            setFace(buffer, &j, &face_inc, vertex[b_point-1].x, vertex[b_point-1].y, vertex[b_point-1].z, rgb, normal);
+            setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgb, normal);
+
+            normal = getNormal(vertex[a_point-1], vertex[c_point-1], vertex[d_point-1]);
+            setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgb, normal);
+            setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgb, normal);
+            setFace(buffer, &j, &face_inc, vertex[d_point-1].x, vertex[d_point-1].y, vertex[d_point-1].z, rgb, normal);
+
+            normal = getNormal(vertex[a_point-1], vertex[d_point-1], vertex[e_point-1]);
+            setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgb, normal);
+            setFace(buffer, &j, &face_inc, vertex[d_point-1].x, vertex[d_point-1].y, vertex[d_point-1].z, rgb, normal);
+            setFace(buffer, &j, &face_inc, vertex[e_point-1].x, vertex[e_point-1].y, vertex[e_point-1].z, rgb, normal);
+        }
 
         free(linebuf);
         linebuf = NULL;
@@ -201,8 +228,9 @@ void parser(GLfloat **buffer, int *sizeMallocFaces, char *filename, t_obj_spec *
     free(vertex);
     vertex = NULL;
     *buffer = realloc(*buffer, ((face_inc * 9) * 9 + 1) * sizeof(GLfloat));
+    *sizeMallocFaces = (face_inc * 9);
 
-    printf("\x1b[92mNombre de triangles:\x1b[0m %d\n", face_inc/3);
+    printf("\x1b[94mNombre de triangles:\x1b[0m %d\n", face_inc/3);
 
     mm->x_min = FLT_MAX;
     mm->y_min = FLT_MAX;
@@ -214,5 +242,5 @@ void parser(GLfloat **buffer, int *sizeMallocFaces, char *filename, t_obj_spec *
     getMinMax(*buffer, face_inc, mm);
     getLengthMiddle(mm);
     //print_vertex(vertex, vertex_inc);
-    //print_buffer(*buffer, face_inc);
+    // print_buffer(*buffer, face_inc);
 }

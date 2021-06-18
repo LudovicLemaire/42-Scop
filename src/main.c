@@ -13,6 +13,7 @@ const char *vertexShaderSource =
 "layout (location = 0) in vec3 aPos;\n"
 "layout (location = 1) in vec3 aCol;\n"
 "layout (location = 2) in vec3 aNor;\n"
+"out vec3 normal = aNor;\n"
 "out vec4 vertexColor;\n"
 "uniform mat4 matriceFinal;\n"
 "uniform mat4 matricePerspective;\n"
@@ -29,15 +30,20 @@ const char *fragmentShaderSource =
 "uniform vec3 rgb;\n"
 "uniform float isColored;\n"
 "in vec4 vertexColor;\n"
+"in vec3 normal;\n"
+"uniform mat4 matriceFinal;\n"
+"vec3 normalizedNormal = normalize(vec3((matriceFinal) *  vec4(normal, 0)));\n"
 "void main() {\n"
-"   float ambientStrength = 1;\n"
+"   float ambientStrength = 0.15;\n"
 "   vec3 lightColor = rgb;\n"
 "   vec3 ambient = ambientStrength * lightColor;\n"
 "   vec3 objectColor = vec3(vertexColor.x, vertexColor.y, vertexColor.z);\n"
 "   vec3 result;\n"
-"   if (isColored == 0.0) {result = ambient * vec3(1.0, 1.0, 1.0);}\n"
-"   else {result = ambient * objectColor;}\n"
-"   FragColor = vec4(result, 1.0);\n"
+"   if (isColored == 0.0) {result = vec3(1.0, 1.0, 1.0);}\n"
+"   else {result = objectColor;}\n"
+"   vec3 lightDirection = vec3(1, -1, -2);\n"
+"   float directionalLightIntensity = max(0.0, dot(normalizedNormal, normalize(-lightDirection.xyz)));\n"
+"   FragColor = vec4(result * (directionalLightIntensity + ambient), 1.0);\n"
 "}";
 
 t_array_mat m4_mult(t_array_mat a, t_array_mat b)
@@ -76,7 +82,7 @@ int shaderCreateProgram() { // refaire parsershader
     glGetShaderiv(vertex, GL_COMPILE_STATUS, &success);
     if (!success)
     {
-        glGetProgramInfoLog(program, 512, NULL, log);
+        glGetShaderInfoLog(vertex, 512, NULL, log);
         printf("[Vertex shader] Linking failed\n%s\n", log);
         exit(0);
     }
@@ -85,7 +91,7 @@ int shaderCreateProgram() { // refaire parsershader
     glGetShaderiv(fragment, GL_COMPILE_STATUS, &success);
     if (!success)
     {
-        glGetProgramInfoLog(program, 512, NULL, log);
+        glGetShaderInfoLog(fragment, 512, NULL, log);
         printf("[Fragment shader] Linking failed\n%s\n", log);
         exit(0);
     }
@@ -342,10 +348,10 @@ int main(int ac, char *av[]) {
     glfwWindowHint (GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint (GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     glfwWindowHint (GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    //glfwWindowHint(GLFW_SAMPLES, 4);
+    glfwWindowHint(GLFW_SAMPLES, 4);
 
     /* Create a windowed mode window and its OpenGL context */
-    window = glfwCreateWindow(1366, 768, "Tamer la fenêtre", NULL, NULL); //2560, 1440
+    window = glfwCreateWindow(1920, 1080, "Tamer la fenêtre", NULL, NULL); //2560, 1440
 
 
     if (!window) {
@@ -412,7 +418,7 @@ int main(int ac, char *av[]) {
     t_array_mat mat_translation_center;
     t_array_mat mat_rotation;
     t_array_mat mat_final;
-    t_array_mat mat_perspective = matrice_perspective(0.00001, 1000.0, 1.0472, 1366.0 / 768.0);
+    t_array_mat mat_perspective = matrice_perspective(0.00001, 1000.0, 1.0472, 1920.0 / 1080.0);
 
     // rescale
     float rescale = 1;
@@ -452,12 +458,16 @@ int main(int ac, char *av[]) {
     mm = NULL;
 
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
+    //glEnable(GL_CULL_FACE);
+    //glCullFace(GL_BACK);
+    glFrontFace(GL_CW);  
+    glEnable(GL_CULL_FACE);  
+    glCullFace(GL_FRONT);  
 
     glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
     glPolygonMode( GL_FRONT_AND_BACK, GL_LINE);
 
+        printf("%d - %d %d \n", bufferSize, bufferSize / 9, bufferSize / 9 / 3);
     
     // Loop until the user closes the window
     while (!glfwWindowShouldClose(window)) {
@@ -480,7 +490,6 @@ int main(int ac, char *av[]) {
         glUniformMatrix4fv(locMatricePerspective, 1, GL_FALSE, mat_perspective.res[0]);
         // Draw the triangle !
         glDrawArrays(GL_TRIANGLES, 0, bufferSize / 9); // Starting from vertex 0; 3 vertices total -> 1 triangle
-
 
         // Swap front and back buffers
         glfwSwapBuffers(window);
