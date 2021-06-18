@@ -1,8 +1,19 @@
 #ifndef STRUCT_H
 # define STRUCT_H
 
-typedef struct			s_keys_hook
-{
+typedef struct			s_vec {
+	float				x;
+	float				y;
+	float				z;
+}						t_vec;
+
+typedef struct			s_rgb {
+	float				r;
+	float				g;
+	float				b;
+}						t_rgb;
+
+typedef struct			s_keys_hook {
     int					escape;
 	int					r;
     int					t;
@@ -30,13 +41,11 @@ typedef struct			s_keys_hook
 	int					kp_1;
 }						t_keys_hook;
 
-typedef struct			s_array_mat
-{
+typedef struct			s_array_mat {
 	float				res[4][4];
 }						t_array_mat;
 
-typedef struct			s_hook_params
-{
+typedef struct			s_hook_params {
 	float				pointSize;
 	float				translationX;
 	float				translationY;
@@ -46,20 +55,10 @@ typedef struct			s_hook_params
 	float				rotationZ;
 	float				speed;
 	int					isColored;
-	float				r;
-	float				g;
-	float				b;
+	t_rgb				rgb;
 }						t_hook_params;
 
-typedef struct			s_vec
-{
-	float				x;
-	float				y;
-	float				z;
-}						t_vec;
-
-typedef struct			s_obj_spec
-{
+typedef struct			s_obj_spec {
 	float				x_min;
 	float				x_max;
 	float				x_length;

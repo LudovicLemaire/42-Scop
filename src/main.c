@@ -12,6 +12,7 @@ const char *vertexShaderSource =
 "#version 330 core\n"
 "layout (location = 0) in vec3 aPos;\n"
 "layout (location = 1) in vec3 aCol;\n"
+"layout (location = 2) in vec3 aNor;\n"
 "out vec4 vertexColor;\n"
 "uniform mat4 matriceFinal;\n"
 "uniform mat4 matricePerspective;\n"
@@ -197,25 +198,25 @@ void keyCallback(GLFWwindow *window, t_keys_hook *keys_hook, t_hook_params *hook
 
     // rotation
     if (keys_hook->kp_7 == 2) 
-        hook_params->rotationZ -= hook_params->speed;
+        hook_params->rotationZ -= hook_params->speed * 0.35;
     if (keys_hook->kp_9 == 2) 
-        hook_params->rotationZ += hook_params->speed;
+        hook_params->rotationZ += hook_params->speed * 0.35;
     if (keys_hook->kp_4 == 2) 
-        hook_params->rotationY -= hook_params->speed;
+        hook_params->rotationY -= hook_params->speed * 0.35;
     if (keys_hook->kp_6 == 2) 
-        hook_params->rotationY += hook_params->speed;
+        hook_params->rotationY += hook_params->speed * 0.35;
     if (keys_hook->kp_8 == 2) 
-        hook_params->rotationX += hook_params->speed;
+        hook_params->rotationX += hook_params->speed * 0.35;
     if (keys_hook->kp_5 == 2) 
-        hook_params->rotationX -= hook_params->speed;
+        hook_params->rotationX -= hook_params->speed * 0.35;
     
     // light color
     if (keys_hook->kp_1 == 2) 
-        hook_params->r += 0.01;
+        hook_params->rgb.r += 0.01;
     if (keys_hook->kp_2 == 2) 
-        hook_params->g += 0.01;
+        hook_params->rgb.g += 0.01;
     if (keys_hook->kp_3 == 2) 
-        hook_params->b += 0.01;
+        hook_params->rgb.b += 0.01;
 
     // speed
     if (keys_hook->kp_plus == 1) 
@@ -341,7 +342,7 @@ int main(int ac, char *av[]) {
     glfwWindowHint (GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint (GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     glfwWindowHint (GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_SAMPLES, 4);
+    //glfwWindowHint(GLFW_SAMPLES, 4);
 
     /* Create a windowed mode window and its OpenGL context */
     window = glfwCreateWindow(1366, 768, "Tamer la fenêtre", NULL, NULL); //2560, 1440
@@ -354,7 +355,7 @@ int main(int ac, char *av[]) {
 
     /* Make the window's context current */
     glfwMakeContextCurrent(window);
-
+    glfwSwapInterval(1);
     if (gl3wInit()) {
         printf("failed to initialize OpenGL\n");
         return -1;
@@ -385,12 +386,15 @@ int main(int ac, char *av[]) {
     free(g_vertex_buffer_data);
     g_vertex_buffer_data = NULL;
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0); // points
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float))); // couleurs
+    //glVertexAttribPointer(position_shader, nombre_de_data, type, false, nombre_de_data_par_vertex, offset)
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)0); // points
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(3 * sizeof(float))); // couleurs
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(6 * sizeof(float))); // normals
     
 
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(0); // points
+    glEnableVertexAttribArray(1); // couleurs
+    glEnableVertexAttribArray(2); // normals
 
     // glDisableVertexAttribArray(0);
 
@@ -439,41 +443,43 @@ int main(int ac, char *av[]) {
     hook_params->rotationY = 0;
     hook_params->rotationZ = 0;
     hook_params->speed = 0.1;
-    hook_params->r = 1;
-    hook_params->g = 1;
-    hook_params->b = 1;
+    hook_params->rgb.r = 1;
+    hook_params->rgb.g = 1;
+    hook_params->rgb.b = 1;
     hook_params->isColored = 0.0;
     mat_translation_center = matriceTranslation(-mm->x_center, -mm->y_center, -mm->z_center);
     free(mm);
     mm = NULL;
 
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
 
     glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
     glPolygonMode( GL_FRONT_AND_BACK, GL_LINE);
 
-
+    
     // Loop until the user closes the window
     while (!glfwWindowShouldClose(window)) {
-        _update_fps_counter(window);
         // Render here
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
-        glEnable(GL_DEPTH_TEST);
 
         keyCallback(window, keys_hook, hook_params);
       
         glUniform1f(locIsColored, hook_params->isColored);
-        glUniform3f(locRGB, hook_params->r, hook_params->g, hook_params->b);
+        glUniform3f(locRGB, hook_params->rgb.r, hook_params->rgb.g, hook_params->rgb.b);
         glUniform1f(locPointSize, hook_params->pointSize);
+        
 
         mat_scale = matriceScale(rescale, rescale, rescale);
         mat_translation = matriceTranslation(hook_params->translationX, hook_params->translationY,hook_params->translationZ);
-        mat_rotation = matriceRotation(hook_params->rotationX, hook_params->rotationY,hook_params->rotationZ);
+        mat_rotation = matriceRotation(hook_params->rotationX, hook_params->rotationY, hook_params->rotationZ);
         mat_final = m4_mult(m4_mult(mat_translation_center, m4_mult(mat_scale, mat_rotation)), mat_translation);
         glUniformMatrix4fv(locMatriceFinal, 1, GL_FALSE, mat_final.res[0]);
         glUniformMatrix4fv(locMatricePerspective, 1, GL_FALSE, mat_perspective.res[0]);
         // Draw the triangle !
-        glDrawArrays(GL_TRIANGLES, 0, bufferSize); // Starting from vertex 0; 3 vertices total -> 1 triangle
+        glDrawArrays(GL_TRIANGLES, 0, bufferSize / 9); // Starting from vertex 0; 3 vertices total -> 1 triangle
 
 
         // Swap front and back buffers
@@ -481,6 +487,7 @@ int main(int ac, char *av[]) {
 
         // Poll for and process events
         glfwPollEvents();
+        _update_fps_counter(window);
     }
 
     glfwTerminate();
