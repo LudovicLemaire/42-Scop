@@ -66,13 +66,15 @@ int shaderCreateProgram() { // refaire parsershader
     char    log[512];
     int     success;
 
-    const char *vertexShaderSource = shaderParser("shaders/vertexShader.vert");
-    const char *fragmentShaderSource = shaderParser("shaders/fragmentShader.frag");
+    char *vertexShaderSource = shaderParser("shaders/vertexShader.vert");
+    char *fragmentShaderSource = shaderParser("shaders/fragmentShader.frag");
 
     vertex      = glCreateShader(GL_VERTEX_SHADER);
     fragment    = glCreateShader(GL_FRAGMENT_SHADER);
 
-    glShaderSource(vertex, 1, &vertexShaderSource, NULL);
+    glShaderSource(vertex, 1, (const char * const *)&vertexShaderSource, NULL);
+    free(vertexShaderSource);
+    vertexShaderSource = NULL;
     glCompileShader(vertex);
     glGetShaderiv(vertex, GL_COMPILE_STATUS, &success);
     if (!success)
@@ -81,7 +83,9 @@ int shaderCreateProgram() { // refaire parsershader
         printf("[Vertex shader] Linking failed\n%s\n", log);
         exit(0);
     }
-    glShaderSource(fragment, 1, &fragmentShaderSource, NULL);
+    glShaderSource(fragment, 1, (const char * const *)&fragmentShaderSource, NULL);
+    free(fragmentShaderSource);
+    fragmentShaderSource = NULL;
     glCompileShader(fragment);
     glGetShaderiv(fragment, GL_COMPILE_STATUS, &success);
     if (!success)
