@@ -117,6 +117,15 @@ void setFace(GLfloat **buffer, int *j, int *face_inc, GLfloat x, GLfloat y, GLfl
     ++(*face_inc);
 }
 
+t_vec fill_vec(float x, float y, float z) {
+	t_vec vec;
+	vec.x = x;
+	vec.y = y;
+	vec.z = z;
+
+	return vec;
+}
+
 void parser(GLfloat **buffer, int *sizeMallocFaces, char *filename, t_obj_spec *mm) {
     srand(time(NULL));
     if (access(filename, F_OK ) != 0 || !EndsWith(filename, ".obj")) {
@@ -129,12 +138,14 @@ void parser(GLfloat **buffer, int *sizeMallocFaces, char *filename, t_obj_spec *
     FILE *inputfile = fopen(filename, "r");
 
     struct stat file_info;
-    lstat(filename, &file_info);
+    stat(filename, &file_info);
     int sizeMallocVertex = file_info.st_size / 50;
+	int sizeMallocNormals = file_info.st_size / 50;
     *sizeMallocFaces = sizeMallocVertex * 9;
 
     t_vec *vertex = calloc(sizeMallocVertex, sizeof(t_vec));
     *buffer = calloc(*sizeMallocFaces, sizeof(GLfloat));
+	t_vec *normals = calloc(sizeMallocNormals, sizeof(t_vec));
 
     size_t linesize = 0;
     char* linebuf = 0;
@@ -142,6 +153,7 @@ void parser(GLfloat **buffer, int *sizeMallocFaces, char *filename, t_obj_spec *
     float x, y, z;
     int a_point, a_texture, a_normal, b_point, b_texture, b_normal, c_point, c_texture, c_normal, d_point, e_point;
     int vertex_inc = 0;
+	int normals_inc = 0;
     int face_inc = 0;
 
     while ((linelen = getline(&linebuf, &linesize, inputfile)) > 0) {
@@ -162,6 +174,12 @@ void parser(GLfloat **buffer, int *sizeMallocFaces, char *filename, t_obj_spec *
             ++vertex_inc;
         }
 
+		// normals
+        if (sscanf(linebuf, "vn %f %f %f", &x, &y, &z) == 3) {
+            fill_vertex(&normals[normals_inc], x, y, z);
+            ++normals_inc;
+        }
+
         // faces
         t_rgb rgb;
         rgb.r = copyGetRC();
@@ -169,7 +187,7 @@ void parser(GLfloat **buffer, int *sizeMallocFaces, char *filename, t_obj_spec *
         rgb.b = copyGetRC();
         int j = face_inc * 9;
         if (sscanf(linebuf, "f %d/%d/%d %d/%d/%d %d/%d/%d", &a_point, &a_texture, &a_normal, &b_point, &b_texture, &b_normal, &c_point, &c_texture, &c_normal) == 9) {
-            t_vec normal = getNormal(vertex[a_point-1], vertex[b_point-1], vertex[c_point-1]);
+            t_vec normal = fill_vec(normals[a_normal-1].x, normals[a_normal-1].y, normals[a_normal-1].z);
             setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgb, normal);
             setFace(buffer, &j, &face_inc, vertex[b_point-1].x, vertex[b_point-1].y, vertex[b_point-1].z, rgb, normal);
             setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgb, normal);
@@ -187,7 +205,7 @@ void parser(GLfloat **buffer, int *sizeMallocFaces, char *filename, t_obj_spec *
             setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgb, normal);
         }
         if (sscanf(linebuf, "f %d//%d %d//%d %d//%d", &a_point, &a_normal, &b_point, &b_normal, &c_point, &c_normal) == 6) {
-            t_vec normal = getNormal(vertex[a_point-1], vertex[b_point-1], vertex[c_point-1]);
+			t_vec normal = fill_vec(normals[a_normal-1].x, normals[a_normal-1].y, normals[a_normal-1].z);
             setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgb, normal);
             setFace(buffer, &j, &face_inc, vertex[b_point-1].x, vertex[b_point-1].y, vertex[b_point-1].z, rgb, normal);
             setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgb, normal);
@@ -227,7 +245,12 @@ void parser(GLfloat **buffer, int *sizeMallocFaces, char *filename, t_obj_spec *
     linebuf = NULL;
     free(vertex);
     vertex = NULL;
-    *buffer = realloc(*buffer, ((face_inc * 9) * 9 + 1) * sizeof(GLfloat));
+    *buffer = realloc(*buffer, ((face_inc * 3 * 9) + 1) * sizeof(GLfloat));
+	if (!*buffer) {
+		printf("ta race\n");
+		exit(0);
+	}
+
     *sizeMallocFaces = (face_inc * 9);
 
     printf("\x1b[94mNombre de triangles:\x1b[0m %d\n", face_inc/3);

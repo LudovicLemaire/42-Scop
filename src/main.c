@@ -12,6 +12,7 @@
 #include <unistd.h>
 #include <string.h>
 
+
 char *shaderParser(char *path) {
     if (access(path, F_OK ) != 0) {
         printf("\x1b[91mShader Path\x1b[0m: %s\n", path);
@@ -25,7 +26,7 @@ char *shaderParser(char *path) {
     char* linebuf = 0;
     ssize_t linelen = 0;
     struct stat file_info;
-    lstat(path, &file_info);
+	stat(path, &file_info);
     int mallocText = file_info.st_size;
     char *completeText = calloc(mallocText, sizeof(char));
 
@@ -275,15 +276,15 @@ t_array_mat matriceIdentity() {
     return matrice;
 }
 
-t_array_mat matrice_perspective(float near, float far, float fov, float ratio) {
+t_array_mat matrice_perspective(float wow_near, float wow_far, float fov, float ratio) {
     t_array_mat mat_perspective = matriceIdentity();
     float e = tan(fov / 2.0);
 
     mat_perspective.res[0][0] = 1.0f / (ratio * e);
     mat_perspective.res[1][1] = 1.0f / (e);
-    mat_perspective.res[2][2] = (far + near) / (far - near) * -1;
+    mat_perspective.res[2][2] = (wow_far + wow_near) / (wow_far - wow_near) * -1;
     mat_perspective.res[2][3] = -1.0f;
-    mat_perspective.res[3][2] = (2.0f * far * near) / (far - near) * -1;
+    mat_perspective.res[3][2] = (2.0f * wow_far * wow_near) / (wow_far - wow_near) * -1;
     return mat_perspective;
 }
 
@@ -343,8 +344,8 @@ int main(int ac, char *av[]) {
     if (!glfwInit())
         return -1;
 
-    glfwWindowHint (GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint (GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint (GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint (GLFW_CONTEXT_VERSION_MINOR, 0);
     glfwWindowHint (GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     glfwWindowHint (GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_SAMPLES, 4);
@@ -448,9 +449,9 @@ int main(int ac, char *av[]) {
     hook_params->rotationY = 0;
     hook_params->rotationZ = 0;
     hook_params->speed = 0.1;
-    hook_params->rgb.r = 1;
-    hook_params->rgb.g = 1;
-    hook_params->rgb.b = 1;
+    hook_params->rgb.r = 0.25;
+    hook_params->rgb.g = 0.25;
+    hook_params->rgb.b = 0.25;
     hook_params->isColored = 0.0;
     mat_translation_center = matriceTranslation(-mm->x_center, -mm->y_center, -mm->z_center);
     free(mm);
@@ -461,7 +462,8 @@ int main(int ac, char *av[]) {
     //glCullFace(GL_BACK);
     glFrontFace(GL_CW);  
     glEnable(GL_CULL_FACE);  
-    glCullFace(GL_FRONT);  
+    glCullFace(GL_FRONT);
+	glDisable(GL_CULL_FACE);
 
     glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
     glPolygonMode( GL_FRONT_AND_BACK, GL_LINE);

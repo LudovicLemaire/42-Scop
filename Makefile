@@ -12,7 +12,7 @@ else
 INC_LIB += -framework OpenGL -lglfw
 endif
 
-CFLAGS    := -Wall -Wextra -O3 -I$(INC_DIR)
+CFLAGS    := -Wall -Wextra -O3 -I$(INC_DIR) -g
 OBJS    := $(patsubst %.c,$(OBJ_DIR)/%.o, $(SRCS))
 
 all: CREATE_OBJDIR $(NAME)
