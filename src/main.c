@@ -1,5 +1,3 @@
-// gcc -I./include tamer.c src/gl3w.c -lglfw -framework Cocoa -framework OpenGL -framework IOKit -o tamer && ./tamer
-
 #include <GL/gl3w.h>
 #include <GLFW/glfw3.h>
 #include <stdio.h>
@@ -165,6 +163,11 @@ void keyCallback(GLFWwindow *window, t_keys_hook *keys_hook, t_hook_params *hook
     checkKey(window, GLFW_KEY_KP_3, &keys_hook->kp_3);
     checkKey(window, GLFW_KEY_KP_2, &keys_hook->kp_2);
     checkKey(window, GLFW_KEY_KP_1, &keys_hook->kp_1);
+	checkKey(window, GLFW_KEY_LEFT_SHIFT, &keys_hook->shift);
+	checkKey(window, GLFW_KEY_N, &keys_hook->n);
+	checkKey(window, GLFW_KEY_B, &keys_hook->b);
+	checkKey(window, GLFW_KEY_M, &keys_hook->m);
+	checkKey(window, GLFW_KEY_C, &keys_hook->c);
 
     // exit
     if (keys_hook->escape == 1)
@@ -229,12 +232,31 @@ void keyCallback(GLFWwindow *window, t_keys_hook *keys_hook, t_hook_params *hook
         hook_params->speed += 0.025;
     if (keys_hook->kp_minus == 1) 
         hook_params->speed -= 0.025;
+	if (keys_hook->shift == 1) 
+        hook_params->speed += 0.5;
+	if (keys_hook->shift == -1) 
+        hook_params->speed -= 0.5;
     
-    // colored mode
-    if (keys_hook->t == 1)
+    // colored random mode
+    if (keys_hook->c == 1)
         hook_params->isColored = 1.0;
-    if (keys_hook->t == -1)
+    if (keys_hook->c == -1)
         hook_params->isColored = 0.0;
+	// colored MTL mode
+    if (keys_hook->m == 1)
+        hook_params->isMtlColored = 1.0;
+    if (keys_hook->m == -1)
+        hook_params->isMtlColored = 0.0;
+	// noise mode
+    if (keys_hook->n == 1)
+        hook_params->isNoise = 1.0;
+    if (keys_hook->n == -1)
+        hook_params->isNoise = 0.0;
+	// Black n White mode
+    if (keys_hook->b == 1)
+        hook_params->isBnW = 1.0;
+    if (keys_hook->b == -1)
+        hook_params->isBnW = 0.0;
 }
 
 
@@ -393,14 +415,16 @@ int main(int ac, char *av[]) {
     g_vertex_buffer_data = NULL;
 
     //glVertexAttribPointer(position_shader, nombre_de_data, type, false, nombre_de_data_par_vertex, offset)
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)0); // points
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(3 * sizeof(float))); // couleurs
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(6 * sizeof(float))); // normals
+    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, BUFFER_LENGTH * sizeof(float), (void*)0); // points
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, BUFFER_LENGTH * sizeof(float), (void*)(3 * sizeof(float))); // couleurs random
+	glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, BUFFER_LENGTH * sizeof(float), (void*)(6 * sizeof(float))); // couleurs MTL
+    glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, BUFFER_LENGTH * sizeof(float), (void*)(9 * sizeof(float))); // normals
     
 
     glEnableVertexAttribArray(0); // points
-    glEnableVertexAttribArray(1); // couleurs
-    glEnableVertexAttribArray(2); // normals
+    glEnableVertexAttribArray(1); // couleurs random
+    glEnableVertexAttribArray(2); // couleurs MTL
+	glEnableVertexAttribArray(3); // normals
 
     // glDisableVertexAttribArray(0);
 
@@ -410,6 +434,9 @@ int main(int ac, char *av[]) {
 
     GLint locRGB = glGetUniformLocation(program, "rgb");
     GLint locIsColored = glGetUniformLocation(program, "isColored");
+	GLint locIsMtlColored = glGetUniformLocation(program, "isMtlColored");
+	GLint locIsNoise = glGetUniformLocation(program, "isNoise");
+	GLint locIsBnW = glGetUniformLocation(program, "isBnW");
     GLint locMatriceFinal = glGetUniformLocation(program, "matriceFinal");
     GLint locPointSize = glGetUniformLocation(program, "pointSize");
     GLint locMatricePerspective = glGetUniformLocation(program, "matricePerspective");
@@ -453,6 +480,9 @@ int main(int ac, char *av[]) {
     hook_params->rgb.g = 0.25;
     hook_params->rgb.b = 0.25;
     hook_params->isColored = 0.0;
+	hook_params->isMtlColored = 0.0;
+	hook_params->isNoise = 0.0;
+	hook_params->isBnW = 0.0;
     mat_translation_center = matriceTranslation(-mm->x_center, -mm->y_center, -mm->z_center);
     free(mm);
     mm = NULL;
@@ -477,6 +507,9 @@ int main(int ac, char *av[]) {
         keyCallback(window, keys_hook, hook_params);
       
         glUniform1f(locIsColored, hook_params->isColored);
+		glUniform1f(locIsMtlColored, hook_params->isMtlColored);
+		glUniform1f(locIsNoise, hook_params->isNoise);
+		glUniform1f(locIsBnW, hook_params->isBnW);
         glUniform3f(locRGB, hook_params->rgb.r, hook_params->rgb.g, hook_params->rgb.b);
         glUniform1f(locPointSize, hook_params->pointSize);
         
@@ -488,7 +521,7 @@ int main(int ac, char *av[]) {
         glUniformMatrix4fv(locMatriceFinal, 1, GL_FALSE, mat_final.res[0]);
         glUniformMatrix4fv(locMatricePerspective, 1, GL_FALSE, mat_perspective.res[0]);
         // Draw the triangle !
-        glDrawArrays(GL_TRIANGLES, 0, bufferSize / 9); // Starting from vertex 0; 3 vertices total -> 1 triangle
+        glDrawArrays(GL_TRIANGLES, 0, bufferSize / BUFFER_LENGTH); // Starting from vertex 0; 3 vertices total -> 1 triangle
 
         // Swap front and back buffers
         glfwSwapBuffers(window);
