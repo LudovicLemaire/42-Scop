@@ -35,7 +35,8 @@ char *shaderParser(char *path) {
     }
     free(linebuf);
     linebuf = NULL;
-    return completeText;
+    fclose(inputfile);
+	return completeText;
 }
 
 t_array_mat m4_mult(t_array_mat a, t_array_mat b)
