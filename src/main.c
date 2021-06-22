@@ -229,13 +229,13 @@ void keyCallback(GLFWwindow *window, t_keys_hook *keys_hook, t_hook_params *hook
         hook_params->rgb.b += 0.01;
 
     // speed
-    if (keys_hook->kp_plus == 1) 
-        hook_params->speed += 0.025;
-    if (keys_hook->kp_minus == 1) 
+	if (keys_hook->kp_plus == 1)
+		hook_params->speed += 0.025;
+	if (keys_hook->kp_minus == 1)
         hook_params->speed -= 0.025;
-	if (keys_hook->shift == 1) 
+	if (keys_hook->shift == 1)
         hook_params->speed += 0.5;
-	if (keys_hook->shift == -1) 
+	if (keys_hook->shift == -1)
         hook_params->speed -= 0.5;
     
     // colored random mode

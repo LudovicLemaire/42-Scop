@@ -117,13 +117,13 @@ float copyGetRC() {
 
 char* concat(const char *s1, const char *s2)
 {
-    const size_t len1 = strlen(s1);
-    const size_t len2 = strlen(s2);
-    char *result = malloc(len1 + len2 + 1);
-	if (!*result)
+    char *result = calloc(strlen(s1) + strlen(s2) + 1, sizeof(char));
+	if (!result) {
+		printf("15'\n");
 		mallocFailed();
-    memcpy(result, s1, len1);
-    memcpy(result + len1, s2, len2 + 1);
+	}
+    strcpy(result, s1);
+    strcat(result, s2);
     return result;
 }
 
@@ -158,7 +158,7 @@ void getPrePath(char *file, char path[256]) {
 
     memset(path, 0, 256 * sizeof(char));
     for (i = len - 1 ; i > 0; i--)
-        if (file[i] == '/')
+        if (file[i] == '\\')
             strncpy(path, file, i + 1);
 }
 
@@ -181,18 +181,25 @@ void parser(GLfloat **buffer, int *sizeMallocFaces, char *filename, t_obj_spec *
     *sizeMallocFaces = sizeMallocVertex * BUFFER_LENGTH;
 
     t_vec *vertex = calloc(sizeMallocVertex, sizeof(t_vec));
-	if (!vertex)
+	if (!vertex){
+		printf("1\n");
 		mallocFailed();
+	}
     *buffer = calloc(*sizeMallocFaces, sizeof(GLfloat));
-	if (!*buffer)
+	if (!*buffer) {
+		printf("2\n");
 		mallocFailed();
+	}
 	t_vec *normal_buff = calloc(sizeMallocNormal, sizeof(t_vec));
-	if (!normal_buff)
+	if (!normal_buff) {
+		printf("3\n");
 		mallocFailed();
+	}
 	t_materials *materials = calloc(sizeMallocMaterials, sizeof(t_materials));
-	if (!materials)
+	if (!materials) {
+		printf("4\n");
 		mallocFailed();
-
+	}
     size_t linesize = 0;
     char* linebuf = 0;
     ssize_t linelen = 0;
@@ -215,15 +222,19 @@ void parser(GLfloat **buffer, int *sizeMallocFaces, char *filename, t_obj_spec *
             sizeMallocVertex *= 1.5;
             printf("sizeMallocVertex: %d\n", sizeMallocVertex);
             vertex = realloc(vertex, (sizeMallocVertex) * sizeof(t_vec));
-			if (!vertex)
+			if (!vertex) {
+				printf("10\n");
 				mallocFailed();
+			}
         }
         if ((face_inc + 1) * 18 >= *sizeMallocFaces) {
             *sizeMallocFaces *= 1.5;
             printf("\x1b[93msizeMallocFaces:\x1b[0m %d\n", *sizeMallocFaces);
             *buffer = realloc(*buffer, *sizeMallocFaces * sizeof(GLfloat));
-			if (!*buffer)
+			if (!*buffer) {
+				printf("9\n");
 				mallocFailed();
+			}
         }
 
 		if (sscanf(linebuf, "usemtl %s", materialName) == 1) {
@@ -262,8 +273,10 @@ void parser(GLfloat **buffer, int *sizeMallocFaces, char *filename, t_obj_spec *
 					if (totalMaterials+1 > sizeMallocMaterials) {
 						sizeMallocMaterials += 10;
 						materials = realloc(materials, (sizeMallocMaterials) * sizeof(t_materials));
-						if (!materials)
+						if (!materials) {
+							printf("8\n");
 							mallocFailed();
+						}
 					}
 					materials[totalMaterials].name = stringCopy(nameMaterial);
 					++totalMaterials;
@@ -391,8 +404,10 @@ void parser(GLfloat **buffer, int *sizeMallocFaces, char *filename, t_obj_spec *
 	fclose(inputfile);
 	//realloc buffer to correct size
     *buffer = realloc(*buffer, ((face_inc * 3 * BUFFER_LENGTH) + 1) * sizeof(GLfloat));
-	if (!*buffer)
+	if (!*buffer) {
+		printf("7\n");
 		mallocFailed();
+	}
 
     *sizeMallocFaces = (face_inc * BUFFER_LENGTH);
 
