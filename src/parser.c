@@ -278,7 +278,7 @@ void parser(GLfloat **buffer, int *sizeMallocFaces, char *filename, t_obj_spec *
 							mallocFailed();
 						}
 					}
-					materials[totalMaterials].name = stringCopy(nameMaterial);
+					materials[totalMaterials].name = strdup(nameMaterial);
 					++totalMaterials;
 				}
 				if (sscanf(linebufMtl, "Kd %f %f %f", &r, &g, &b) == 3) {
