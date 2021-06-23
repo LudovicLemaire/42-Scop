@@ -160,7 +160,7 @@ void getPrePath(char *file, char path[256]) {
 
     memset(path, 0, 256 * sizeof(char));
     for (i = len - 1 ; i > 0; i--)
-        if (file[i] == '\\')
+        if (file[i] == '/')
             strncpy(path, file, i + 1);
 }
 
