@@ -9,7 +9,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <string.h>
-
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 char *shaderParser(char *path) {
     if (access(path, F_OK ) != 0) {
@@ -26,7 +27,7 @@ char *shaderParser(char *path) {
     struct stat file_info;
 	stat(path, &file_info);
     int mallocText = file_info.st_size;
-    char *completeText = calloc(mallocText, sizeof(char));
+    char *completeText = calloc(mallocText + 1, sizeof(char));
 
     while ((linelen = getline(&linebuf, &linesize, inputfile)) > 0) {
         strcat(completeText, linebuf);
@@ -416,16 +417,19 @@ int main(int ac, char *av[]) {
     g_vertex_buffer_data = NULL;
 
     //glVertexAttribPointer(position_shader, nombre_de_data, type, false, nombre_de_data_par_vertex, offset)
-    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, BUFFER_LENGTH * sizeof(float), (void*)0); // points
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, BUFFER_LENGTH * sizeof(float), (void*)(3 * sizeof(float))); // couleurs random
-	glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, BUFFER_LENGTH * sizeof(float), (void*)(6 * sizeof(float))); // couleurs MTL
-    glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, BUFFER_LENGTH * sizeof(float), (void*)(9 * sizeof(float))); // normals
+    glVertexAttribPointer(0, 5, GL_FLOAT, GL_FALSE, BUFFER_LENGTH * sizeof(float), (void*)0); // points
+    glVertexAttribPointer(1, 5, GL_FLOAT, GL_FALSE, BUFFER_LENGTH * sizeof(float), (void*)(3 * sizeof(float))); // couleurs random
+	glVertexAttribPointer(2, 5, GL_FLOAT, GL_FALSE, BUFFER_LENGTH * sizeof(float), (void*)(6 * sizeof(float))); // couleurs MTL
+    glVertexAttribPointer(3, 5, GL_FLOAT, GL_FALSE, BUFFER_LENGTH * sizeof(float), (void*)(9 * sizeof(float))); // normals
+	glVertexAttribPointer(4, 5, GL_FLOAT, GL_FALSE, BUFFER_LENGTH * sizeof(float), (void*)(12 * sizeof(float))); // texture
+	
     
 
     glEnableVertexAttribArray(0); // points
     glEnableVertexAttribArray(1); // couleurs random
     glEnableVertexAttribArray(2); // couleurs MTL
 	glEnableVertexAttribArray(3); // normals
+	glEnableVertexAttribArray(4); // texture
 
     // glDisableVertexAttribArray(0);
 
@@ -498,6 +502,37 @@ int main(int ac, char *av[]) {
 
     glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
     glPolygonMode( GL_FRONT_AND_BACK, GL_LINE);
+
+
+	/* TEST TEXTURING */
+	GLuint tex;
+	glGenTextures(1, &tex);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+	float color[] = { 1.0f, 0.0f, 0.0f, 1.0f };
+	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, color);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	int width, height, nrChannels;
+	unsigned char *data = stbi_load("texture/container.jpg", &width, &height, &nrChannels, 0);
+	if (!data) {
+		printf("texture loading failed\n");
+		exit(0);
+	}
+
+	unsigned int texture;
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+	glGenerateMipmap(GL_TEXTURE_2D);
+
+	stbi_image_free(data);
+
+	/* FIN TEST TEXTURING */
     
     // Loop until the user closes the window
     while (!glfwWindowShouldClose(window)) {

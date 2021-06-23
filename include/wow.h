@@ -1,6 +1,6 @@
 #ifndef STRUCT_H
 # define STRUCT_H
-# define BUFFER_LENGTH 12
+# define BUFFER_LENGTH 14
 
 typedef struct			s_vec {
 	float				x;

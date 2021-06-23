@@ -127,7 +127,7 @@ char* concat(const char *s1, const char *s2)
     return result;
 }
 
-void setFace(GLfloat **buffer, int *j, int *face_inc, GLfloat x, GLfloat y, GLfloat z, t_rgb rgbRand, t_rgb rgbMtl, t_vec normal) {
+void setFace(GLfloat **buffer, int *j, int *face_inc, GLfloat x, GLfloat y, GLfloat z, t_rgb rgbRand, t_rgb rgbMtl, t_vec normal, GLfloat x_texture, GLfloat y_texture) {
     (*buffer)[(*j)++] = x;
     (*buffer)[(*j)++] = y;
     (*buffer)[(*j)++] = z;
@@ -140,6 +140,8 @@ void setFace(GLfloat **buffer, int *j, int *face_inc, GLfloat x, GLfloat y, GLfl
     (*buffer)[(*j)++] = normal.x;
     (*buffer)[(*j)++] = normal.y;
     (*buffer)[(*j)++] = normal.z;
+	(*buffer)[(*j)++] = x_texture;
+	(*buffer)[(*j)++] = y_texture;
     ++(*face_inc);
 }
 
@@ -314,65 +316,65 @@ void parser(GLfloat **buffer, int *sizeMallocFaces, char *filename, t_obj_spec *
         int j = face_inc * BUFFER_LENGTH;
         if (sscanf(linebuf, "f %d/%d/%d %d/%d/%d %d/%d/%d", &a_point, &a_texture, &a_normal, &b_point, &b_texture, &b_normal, &c_point, &c_texture, &c_normal) == 9) {
             t_vec normal = fill_vec(-normal_buff[a_normal-1].x, -normal_buff[a_normal-1].y, -normal_buff[a_normal-1].z);
-            setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal);
-            setFace(buffer, &j, &face_inc, vertex[b_point-1].x, vertex[b_point-1].y, vertex[b_point-1].z, rgbRand, rgbMtl, normal);
-            setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgbRand, rgbMtl, normal);
+            setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal, 0.0, 0.0);
+            setFace(buffer, &j, &face_inc, vertex[b_point-1].x, vertex[b_point-1].y, vertex[b_point-1].z, rgbRand, rgbMtl, normal, 0.0, 1.0);
+            setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgbRand, rgbMtl, normal, 1.0, 1.0);
         }
 		else if (sscanf(linebuf, "f %d//%d %d//%d %d//%d %d//%d", &a_point, &a_normal, &b_point, &b_normal, &c_point, &c_normal, &d_point, &d_normal) == 8) {
 			t_vec normal = fill_vec(-normal_buff[b_normal-1].x, -normal_buff[b_normal-1].y, -normal_buff[b_normal-1].z);
-            setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal);
-            setFace(buffer, &j, &face_inc, vertex[b_point-1].x, vertex[b_point-1].y, vertex[b_point-1].z, rgbRand, rgbMtl, normal);
-            setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgbRand, rgbMtl, normal);
+            setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal, 0.0, 0.0);
+            setFace(buffer, &j, &face_inc, vertex[b_point-1].x, vertex[b_point-1].y, vertex[b_point-1].z, rgbRand, rgbMtl, normal, 0.0, 1.0);
+            setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgbRand, rgbMtl, normal, 1.0, 1.0);
 
             normal = fill_vec(-normal_buff[c_normal-1].x, -normal_buff[c_normal-1].y, -normal_buff[c_normal-1].z);
-            setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal);
-            setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgbRand, rgbMtl, normal);
-            setFace(buffer, &j, &face_inc, vertex[d_point-1].x, vertex[d_point-1].y, vertex[d_point-1].z, rgbRand, rgbMtl, normal);
+            setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal, 0.0, 0.0);
+            setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgbRand, rgbMtl, normal, 0.0, 1.0);
+            setFace(buffer, &j, &face_inc, vertex[d_point-1].x, vertex[d_point-1].y, vertex[d_point-1].z, rgbRand, rgbMtl, normal, 1.0, 1.0);
         }
         else if (sscanf(linebuf, "f %d %d %d", &a_point, &b_point, &c_point) == 3) {
             t_vec normal = getNormal(vertex[a_point-1], vertex[b_point-1], vertex[c_point-1]);
-            setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal);
-            setFace(buffer, &j, &face_inc, vertex[b_point-1].x, vertex[b_point-1].y, vertex[b_point-1].z, rgbRand, rgbMtl, normal);
-            setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgbRand, rgbMtl, normal);
+            setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal, 0.0, 0.0);
+            setFace(buffer, &j, &face_inc, vertex[b_point-1].x, vertex[b_point-1].y, vertex[b_point-1].z, rgbRand, rgbMtl, normal, 0.0, 1.0);
+            setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgbRand, rgbMtl, normal, 1.0, 1.0);
         }
         else if (sscanf(linebuf, "f %d/%d %d/%d %d/%d", &a_point, &a_texture, &b_point, &b_texture, &c_point, &c_texture) == 6) {
             t_vec normal = getNormal(vertex[a_point-1], vertex[b_point-1], vertex[c_point-1]);
-            setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal);
-            setFace(buffer, &j, &face_inc, vertex[b_point-1].x, vertex[b_point-1].y, vertex[b_point-1].z, rgbRand, rgbMtl, normal);
-            setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgbRand, rgbMtl, normal);
+            setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal, 0.0, 0.0);
+            setFace(buffer, &j, &face_inc, vertex[b_point-1].x, vertex[b_point-1].y, vertex[b_point-1].z, rgbRand, rgbMtl, normal, 0.0, 1.0);
+            setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgbRand, rgbMtl, normal, 1.0, 1.0);
         }
         else if (sscanf(linebuf, "f %d//%d %d//%d %d//%d", &a_point, &a_normal, &b_point, &b_normal, &c_point, &c_normal) == 6) {
 			t_vec normal = fill_vec(-normal_buff[a_normal-1].x, -normal_buff[a_normal-1].y, -normal_buff[a_normal-1].z);
-            setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal);
-            setFace(buffer, &j, &face_inc, vertex[b_point-1].x, vertex[b_point-1].y, vertex[b_point-1].z, rgbRand, rgbMtl, normal);
-            setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgbRand, rgbMtl, normal);
+            setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal, 0.0, 0.0);
+            setFace(buffer, &j, &face_inc, vertex[b_point-1].x, vertex[b_point-1].y, vertex[b_point-1].z, rgbRand, rgbMtl, normal, 0.0, 1.0);
+            setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgbRand, rgbMtl, normal, 1.0, 1.0);
         }
         else if (sscanf(linebuf, "f %d %d %d %d", &a_point, &b_point, &c_point, &d_point) == 4) {
             t_vec normal = getNormal(vertex[a_point-1], vertex[b_point-1], vertex[c_point-1]);
-            setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal);
-            setFace(buffer, &j, &face_inc, vertex[b_point-1].x, vertex[b_point-1].y, vertex[b_point-1].z, rgbRand, rgbMtl, normal);
-            setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgbRand, rgbMtl, normal);
+            setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal, 0.0, 0.0);
+            setFace(buffer, &j, &face_inc, vertex[b_point-1].x, vertex[b_point-1].y, vertex[b_point-1].z, rgbRand, rgbMtl, normal, 0.0, 1.0);
+            setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgbRand, rgbMtl, normal, 1.0, 1.0);
 
             normal = getNormal(vertex[a_point-1], vertex[c_point-1], vertex[d_point-1]);
-            setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal);
-            setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgbRand, rgbMtl, normal);
-            setFace(buffer, &j, &face_inc, vertex[d_point-1].x, vertex[d_point-1].y, vertex[d_point-1].z, rgbRand, rgbMtl, normal);
+            setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal, 0.0, 0.0);
+            setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgbRand, rgbMtl, normal, 0.0, 1.0);
+            setFace(buffer, &j, &face_inc, vertex[d_point-1].x, vertex[d_point-1].y, vertex[d_point-1].z, rgbRand, rgbMtl, normal, 1.0, 1.0);
         }
         else if (sscanf(linebuf, "f %d %d %d %d %d", &a_point, &b_point, &c_point, &d_point, &e_point) == 5) {
             t_vec normal = getNormal(vertex[a_point-1], vertex[b_point-1], vertex[c_point-1]);
-            setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal);
-            setFace(buffer, &j, &face_inc, vertex[b_point-1].x, vertex[b_point-1].y, vertex[b_point-1].z, rgbRand, rgbMtl, normal);
-            setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgbRand, rgbMtl, normal);
+            setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal, 0.0, 0.0);
+            setFace(buffer, &j, &face_inc, vertex[b_point-1].x, vertex[b_point-1].y, vertex[b_point-1].z, rgbRand, rgbMtl, normal, 0.0, 1.0);
+            setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgbRand, rgbMtl, normal, 1.0, 1.0);
 
             normal = getNormal(vertex[a_point-1], vertex[c_point-1], vertex[d_point-1]);
-            setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal);
-            setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgbRand, rgbMtl, normal);
-            setFace(buffer, &j, &face_inc, vertex[d_point-1].x, vertex[d_point-1].y, vertex[d_point-1].z, rgbRand, rgbMtl, normal);
+            setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal, 0.0, 0.0);
+            setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgbRand, rgbMtl, normal, 0.0, 1.0);
+            setFace(buffer, &j, &face_inc, vertex[d_point-1].x, vertex[d_point-1].y, vertex[d_point-1].z, rgbRand, rgbMtl, normal, 1.0, 1.0);
 
             normal = getNormal(vertex[a_point-1], vertex[d_point-1], vertex[e_point-1]);
-            setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal);
-            setFace(buffer, &j, &face_inc, vertex[d_point-1].x, vertex[d_point-1].y, vertex[d_point-1].z, rgbRand, rgbMtl, normal);
-            setFace(buffer, &j, &face_inc, vertex[e_point-1].x, vertex[e_point-1].y, vertex[e_point-1].z, rgbRand, rgbMtl, normal);
+            setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal, 0.0, 0.0);
+            setFace(buffer, &j, &face_inc, vertex[d_point-1].x, vertex[d_point-1].y, vertex[d_point-1].z, rgbRand, rgbMtl, normal, 0.0, 1.0);
+            setFace(buffer, &j, &face_inc, vertex[e_point-1].x, vertex[e_point-1].y, vertex[e_point-1].z, rgbRand, rgbMtl, normal, 1.0, 1.0);
         }
 		////printf("FREE linebuf 1\n");
         free(linebuf);
