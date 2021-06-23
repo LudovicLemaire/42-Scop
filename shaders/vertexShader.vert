@@ -8,6 +8,7 @@ out vec3 normal;
 out vec4 rColor;
 out vec4 mtlColor;
 out vec3 FragPos;
+out vec2 TexCoord;
 uniform mat4 matriceFinal;
 uniform mat4 matricePerspective;
 uniform float pointSize;
@@ -18,4 +19,5 @@ void main() {
 	FragPos = vec3(matriceFinal * vec4(aPos, 1.0));
 	rColor = vec4(aRCol, 1.0);
 	mtlColor = vec4(aMtlCol, 1.0);
+	TexCoord = aTex;
 }

@@ -416,12 +416,12 @@ int main(int ac, char *av[]) {
     free(g_vertex_buffer_data);
     g_vertex_buffer_data = NULL;
 
-    //glVertexAttribPointer(position_shader, nombre_de_data, type, false, nombre_de_data_par_vertex, offset)
-    glVertexAttribPointer(0, 5, GL_FLOAT, GL_FALSE, BUFFER_LENGTH * sizeof(float), (void*)0); // points
-    glVertexAttribPointer(1, 5, GL_FLOAT, GL_FALSE, BUFFER_LENGTH * sizeof(float), (void*)(3 * sizeof(float))); // couleurs random
-	glVertexAttribPointer(2, 5, GL_FLOAT, GL_FALSE, BUFFER_LENGTH * sizeof(float), (void*)(6 * sizeof(float))); // couleurs MTL
-    glVertexAttribPointer(3, 5, GL_FLOAT, GL_FALSE, BUFFER_LENGTH * sizeof(float), (void*)(9 * sizeof(float))); // normals
-	glVertexAttribPointer(4, 5, GL_FLOAT, GL_FALSE, BUFFER_LENGTH * sizeof(float), (void*)(12 * sizeof(float))); // texture
+    //glVertexAttribPointer(position_shader, nombre_de_data_à_recuperer_par_pointeur, type, false, nombre_de_data_par_vertex, offset)
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, BUFFER_LENGTH * sizeof(float), (void*)0); // points
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, BUFFER_LENGTH * sizeof(float), (void*)(3 * sizeof(float))); // couleurs random
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, BUFFER_LENGTH * sizeof(float), (void*)(6 * sizeof(float))); // couleurs MTL
+    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, BUFFER_LENGTH * sizeof(float), (void*)(9 * sizeof(float))); // normals
+	glVertexAttribPointer(4, 2, GL_FLOAT, GL_FALSE, BUFFER_LENGTH * sizeof(float), (void*)(12 * sizeof(float))); // texture
 	
     
 
@@ -518,7 +518,7 @@ int main(int ac, char *av[]) {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 	int width, height, nrChannels;
-	unsigned char *data = stbi_load("texture/container.jpg", &width, &height, &nrChannels, 0);
+	unsigned char *data = stbi_load("texture/wow.jpg", &width, &height, &nrChannels, 0);
 	if (!data) {
 		printf("texture loading failed\n");
 		exit(0);

@@ -9,11 +9,14 @@ in vec4 rColor;
 in vec4 mtlColor;
 in vec3 normal;
 in vec3 FragPos;
+in vec2 TexCoord;
 uniform mat4 matriceFinal;
 vec3 normalizedNormal = normalize(vec3((matriceFinal) * vec4(normal, 0)));
 float specularStrength = 0.5;
 vec3 specularColor = vec3(1.0, 1.0, 1.0);
 float specularShininess = 32;
+
+uniform sampler2D ourTexture;
 
 float noise( vec2 p ) {
    	// e^pi (Gelfond's constant)
@@ -55,4 +58,5 @@ void main() {
     float directionalLightIntensity = min(max(0.0, dot(normalizedNormal, normalize(lightDirection.xyz))), 0.75);
 	vec3 result = (ambient + directionalLightIntensity + specular) * selectedColor;
 	FragColor = vec4(result, 1.0);
+	FragColor *= texture(ourTexture, TexCoord);
 }
