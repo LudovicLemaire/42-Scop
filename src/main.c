@@ -259,23 +259,18 @@ void keyCallback(GLFWwindow *window, t_keys_hook *keys_hook, t_hook_params *hook
         hook_params->isBnW = 1.0;
     if (keys_hook->b == -1)
         hook_params->isBnW = 0.0;
+	// textured mode
+    if (keys_hook->t == 1)
+        hook_params->isTextured = 1.0;
+    if (keys_hook->t == -1)
+        hook_params->isTextured = 0.0;
 }
 
 
-void _update_fps_counter(GLFWwindow* window) {
-    static double previous_seconds = 0;
-    static int frame_count;
-    double current_seconds = glfwGetTime();
-    double elapsed_seconds = current_seconds - previous_seconds;
-    if (elapsed_seconds > 0.25) {
-        previous_seconds = current_seconds;
-        double fps = (double)frame_count / elapsed_seconds;
-        char tmp[128];
-        sprintf(tmp, "Tamer la fenetre: %.0f fps", fps);
-        glfwSetWindowTitle(window, tmp);
-        frame_count = 0;
-    }
-    frame_count++;
+void _show_fps_counter(GLFWwindow* window, int frames) {
+    char tmp[128];
+    sprintf(tmp, "Tamer la fenetre: %d fps", frames);
+    glfwSetWindowTitle(window, tmp);
 }
 
 t_array_mat matriceIdentity() {
@@ -442,8 +437,14 @@ int main(int ac, char *av[]) {
 	GLint locIsMtlColored = glGetUniformLocation(program, "isMtlColored");
 	GLint locIsNoise = glGetUniformLocation(program, "isNoise");
 	GLint locIsBnW = glGetUniformLocation(program, "isBnW");
+	GLint locIsTextured = glGetUniformLocation(program, "isTextured");
     GLint locMatriceFinal = glGetUniformLocation(program, "matriceFinal");
     GLint locPointSize = glGetUniformLocation(program, "pointSize");
+	GLint locTransitionTexture = glGetUniformLocation(program, "transitionTexture");
+	GLint locTransitionNoise = glGetUniformLocation(program, "transitionNoise");
+	GLint locTransitionBnW = glGetUniformLocation(program, "transitionBnW");
+	GLint locTransitionMtlColor = glGetUniformLocation(program, "transitionMtlColor");
+	GLint locTransitionRColor = glGetUniformLocation(program, "transitionRColor");
     GLint locMatricePerspective = glGetUniformLocation(program, "matricePerspective");
     t_array_mat mat_scale;
     t_array_mat mat_translation;
@@ -488,6 +489,7 @@ int main(int ac, char *av[]) {
 	hook_params->isMtlColored = 0.0;
 	hook_params->isNoise = 0.0;
 	hook_params->isBnW = 0.0;
+	hook_params->isTextured = 0.0;
     mat_translation_center = matriceTranslation(-mm->x_center, -mm->y_center, -mm->z_center);
     free(mm);
     mm = NULL;
@@ -501,44 +503,77 @@ int main(int ac, char *av[]) {
 	glDisable(GL_CULL_FACE);
 
     glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
-    glPolygonMode( GL_FRONT_AND_BACK, GL_LINE);
+    glPolygonMode( GL_FRONT_AND_BACK, GL_FILL);
 
 
 	/* TEST TEXTURING */
 	GLuint tex;
 	glGenTextures(1, &tex);
+	glBindTexture(GL_TEXTURE_2D, tex);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-	float color[] = { 1.0f, 0.0f, 0.0f, 1.0f };
-	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, color);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 	int width, height, nrChannels;
-	unsigned char *data = stbi_load("texture/wow.jpg", &width, &height, &nrChannels, 0);
+	unsigned char *data = stbi_load("texture/lava.jpg", &width, &height, &nrChannels, 0);
 	if (!data) {
 		printf("texture loading failed\n");
 		exit(0);
 	}
 
-	unsigned int texture;
-	glGenTextures(1, &texture);
-	glBindTexture(GL_TEXTURE_2D, texture);
+	// unsigned int texture;
+	// glGenTextures(1, &texture);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
 	glGenerateMipmap(GL_TEXTURE_2D);
 
-	stbi_image_free(data);
 
+
+
+	GLuint tex2;
+	glGenTextures(1, &tex2);
+	glBindTexture(GL_TEXTURE_2D, tex2);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	int width2, height2, nrChannels2;
+	unsigned char *data2 = stbi_load("texture/psyduck.jpg", &width2, &height2, &nrChannels2, 0);
+	if (!data2) {
+		printf("texture loading failed\n");
+		exit(0);
+	}
+
+	// unsigned int texture;
+	// glGenTextures(1, &texture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width2, height2, 0, GL_RGB, GL_UNSIGNED_BYTE, data2);
+	glGenerateMipmap(GL_TEXTURE_2D);
+
+
+
+	stbi_image_free(data);
 	/* FIN TEST TEXTURING */
+
+	double previousTimeFpsCount = glfwGetTime();
+	double previousTime = glfwGetTime();
+	double transitionTexture = glfwGetTime();
+	double transitionNoise = glfwGetTime();
+	double transitionBnW = glfwGetTime();
+	double transitionMtlColor = glfwGetTime();
+	double transitionRColor = glfwGetTime();
+
+	int frameCount = 0;
+
     
     // Loop until the user closes the window
     while (!glfwWindowShouldClose(window)) {
         // Render here
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        
 
         keyCallback(window, keys_hook, hook_params);
       
@@ -546,9 +581,14 @@ int main(int ac, char *av[]) {
 		glUniform1f(locIsMtlColored, hook_params->isMtlColored);
 		glUniform1f(locIsNoise, hook_params->isNoise);
 		glUniform1f(locIsBnW, hook_params->isBnW);
+		glUniform1f(locIsTextured, hook_params->isTextured);
         glUniform3f(locRGB, hook_params->rgb.r, hook_params->rgb.g, hook_params->rgb.b);
         glUniform1f(locPointSize, hook_params->pointSize);
         
+
+
+		// change texture
+		// glBindTexture(GL_TEXTURE_2D, (rand() % 2) == 1 ? tex : tex2);
 
         mat_scale = matriceScale(rescale, rescale, rescale);
         mat_translation = matriceTranslation(hook_params->translationX, hook_params->translationY,hook_params->translationZ);
@@ -564,7 +604,59 @@ int main(int ac, char *av[]) {
 
         // Poll for and process events
         glfwPollEvents();
-        _update_fps_counter(window);
+
+		double currentTime = glfwGetTime();
+    	frameCount++;
+
+		// Handle Texture ratio
+		if (hook_params->isTextured > 0) {
+			transitionTexture = fmin(transitionTexture + (currentTime - previousTime), TIME_TRANSITION_S);
+			glUniform1f(locTransitionTexture, transitionTexture / TIME_TRANSITION_S);
+		} else {
+			transitionTexture = fmax(transitionTexture - (currentTime - previousTime), 0.0);
+			glUniform1f(locTransitionTexture, transitionTexture / TIME_TRANSITION_S);
+		}
+		// Handle Noise ratio
+		if (hook_params->isNoise > 0) {
+			transitionNoise = fmin(transitionNoise + (currentTime - previousTime), TIME_TRANSITION_S);
+			glUniform1f(locTransitionNoise, transitionNoise / TIME_TRANSITION_S);
+		} else {
+			transitionNoise = fmax(transitionNoise - (currentTime - previousTime), 0.0);
+			glUniform1f(locTransitionNoise, transitionNoise / TIME_TRANSITION_S);
+		}
+		// Handle Black n White ratio
+		if (hook_params->isBnW > 0) {
+			transitionBnW = fmin(transitionBnW + (currentTime - previousTime), TIME_TRANSITION_S);
+			glUniform1f(locTransitionBnW, transitionBnW / TIME_TRANSITION_S);
+		} else {
+			transitionBnW = fmax(transitionBnW - (currentTime - previousTime), 0.0);
+			glUniform1f(locTransitionBnW, transitionBnW / TIME_TRANSITION_S);
+		}
+		// Handle Mtl Color ratio
+		if (hook_params->isMtlColored > 0) {
+			transitionMtlColor = fmin(transitionMtlColor + (currentTime - previousTime), TIME_TRANSITION_S);
+			glUniform1f(locTransitionMtlColor, transitionMtlColor / TIME_TRANSITION_S);
+		} else {
+			transitionMtlColor = fmax(transitionMtlColor - (currentTime - previousTime), 0.0);
+			glUniform1f(locTransitionMtlColor, transitionMtlColor / TIME_TRANSITION_S);
+		}
+		// Handle Random Color ratio
+		if (hook_params->isColored > 0) {
+			transitionRColor = fmin(transitionRColor + (currentTime - previousTime), TIME_TRANSITION_S);
+			glUniform1f(locTransitionRColor, transitionRColor / TIME_TRANSITION_S);
+		} else {
+			transitionRColor = fmax(transitionRColor - (currentTime - previousTime), 0.0);
+			glUniform1f(locTransitionRColor, transitionRColor / TIME_TRANSITION_S);
+		}
+
+		// Calculate FPS
+		if (currentTime - previousTimeFpsCount >= 1.0) {
+			_show_fps_counter(window, frameCount);
+
+			frameCount = 0;
+			previousTimeFpsCount = currentTime;
+		}
+		previousTime = currentTime;
     }
 
     glfwTerminate();

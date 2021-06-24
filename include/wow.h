@@ -1,6 +1,7 @@
 #ifndef STRUCT_H
 # define STRUCT_H
 # define BUFFER_LENGTH 14
+# define TIME_TRANSITION_S 2
 
 typedef struct			s_vec {
 	float				x;
@@ -69,6 +70,7 @@ typedef struct			s_hook_params {
 	int					isMtlColored;
 	int					isNoise;
 	int					isBnW;
+	int					isTextured;
 	t_rgb				rgb;
 }						t_hook_params;
 

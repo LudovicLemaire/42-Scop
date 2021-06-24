@@ -5,6 +5,12 @@ uniform float isColored;
 uniform float isMtlColored;
 uniform float isNoise;
 uniform float isBnW;
+uniform float isTextured;
+uniform float transitionTexture;
+uniform float transitionNoise;
+uniform float transitionBnW;
+uniform float transitionMtlColor;
+uniform float transitionRColor;
 in vec4 rColor;
 in vec4 mtlColor;
 in vec3 normal;
@@ -21,7 +27,7 @@ uniform sampler2D ourTexture;
 float noise( vec2 p ) {
    	// e^pi (Gelfond's constant)
    	// 2^sqrt(2) (Gelfond–Schneider constant)
-    vec2 K1 = vec2( 23.14069263277926, 2.665144142690225 );
+    vec2 K1 = vec2(23.14069263277926, 2.665144142690225 );
 
     return fract(cos(dot(p,K1)) * 12345.6789);
 }
@@ -32,22 +38,9 @@ void main() {
     vec3 ambient = ambientStrength * lightColor;
     vec3 objectColorRand = vec3(rColor.x, rColor.y, rColor.z);
 	vec3 objectMtlColor = vec3(mtlColor.x, mtlColor.y, mtlColor.z);
-    vec3 selectedColor;
+    vec4 startColor = vec4(0.9, 0.9, 0.9, 1.0);;
+	vec4 baseColor = vec4(1.0, 1.0, 1.0, 1.0);
 
-	if (isColored == 1.0) {
-		selectedColor = objectColorRand;
-	} else if (isMtlColored == 1.0) {
-		selectedColor = objectMtlColor;
-	} else {
-		selectedColor = vec3(0.9, 0.9, 0.9);
-	}
-	if (isBnW == 1.0) {
-		float bnwColor = (objectColorRand.x + objectColorRand.y + objectColorRand.z) / 3;
-		selectedColor = vec3(bnwColor, bnwColor, bnwColor);
-	}
-	if (isNoise == 1.0) {
-		selectedColor *= noise(FragPos.xy);
-	}
     vec3 lightDirection = vec3(1, -1, -2);
 
 	vec3 view_dir = normalize(vec3(0.0, 0.0, 0.0) - FragPos.xyz);
@@ -56,7 +49,19 @@ void main() {
 	vec3 specular = specularStrength * spec * specularColor; 
 
     float directionalLightIntensity = min(max(0.0, dot(normalizedNormal, normalize(lightDirection.xyz))), 0.75);
-	vec3 result = (ambient + directionalLightIntensity + specular) * selectedColor;
-	FragColor = vec4(result, 1.0);
-	FragColor *= texture(ourTexture, TexCoord);
+	FragColor = startColor;
+	
+	// apply texture
+	FragColor *= mix(baseColor, texture(ourTexture, TexCoord), transitionTexture);
+	// apply noise
+	FragColor *= mix(baseColor, FragColor*noise(FragPos.xy), transitionNoise);
+	// apply Black n White
+	float bnwColor = (objectColorRand.x + objectColorRand.y + objectColorRand.z) / 3;
+	FragColor *= mix(baseColor, vec4(vec3(bnwColor, bnwColor, bnwColor), 1.0), transitionBnW);
+	// apply Mtl Color
+	FragColor *= mix(baseColor, vec4(objectMtlColor, 1.0), transitionMtlColor);
+	// apply Random Color
+	FragColor *= mix(baseColor, vec4(objectColorRand, 1.0), transitionRColor);
+	// apply lights
+	FragColor *= vec4((ambient + directionalLightIntensity + specular), 1.0);
 }
