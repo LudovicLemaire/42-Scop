@@ -1,5 +1,5 @@
 NAME	= scop
-SRCS	= main.c gl3w.c parser.c
+SRCS	= main.c gl3w.c parser.c shader_handler.c key_hook.c utils.c
 
 OBJ_DIR = ./.Objects
 SRC_DIR = ./src
@@ -24,7 +24,7 @@ $(NAME): $(OBJS)
 	@gcc ${CFLAGS} $^ ${INC_LIB} -o ${NAME} 
 	@printf "\033[1m[ SCOP ]\033[1m\t\tcompilation complete \x1b[92m✓\t\033[0m\n"
 
-$(OBJ_DIR)/%.o : $(SRC_DIR)/%.c include/wow.h
+$(OBJ_DIR)/%.o : $(SRC_DIR)/%.c include/scop.h
 	@gcc $(CFLAGS) $(INC_HDR) -o $@ -c $<
 
 mk: 

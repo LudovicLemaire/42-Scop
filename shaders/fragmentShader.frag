@@ -11,11 +11,13 @@ uniform float transitionNoise;
 uniform float transitionBnW;
 uniform float transitionMtlColor;
 uniform float transitionRColor;
+uniform float textureVType;
 in vec4 rColor;
 in vec4 mtlColor;
 in vec3 normal;
 in vec3 FragPos;
 in vec2 TexCoord;
+in vec2 TexCoordMtl;
 uniform mat4 matriceFinal;
 vec3 normalizedNormal = normalize(vec3((matriceFinal) * vec4(normal, 0)));
 float specularStrength = 0.5;
@@ -38,7 +40,7 @@ void main() {
     vec3 ambient = ambientStrength * lightColor;
     vec3 objectColorRand = vec3(rColor.x, rColor.y, rColor.z);
 	vec3 objectMtlColor = vec3(mtlColor.x, mtlColor.y, mtlColor.z);
-    vec4 startColor = vec4(0.9, 0.9, 0.9, 1.0);;
+    vec4 startColor = vec4(1.0, 1.0, 1.0, 1.0);
 	vec4 baseColor = vec4(1.0, 1.0, 1.0, 1.0);
 
     vec3 lightDirection = vec3(1, -1, -2);
@@ -52,7 +54,10 @@ void main() {
 	FragColor = startColor;
 	
 	// apply texture
-	FragColor *= mix(baseColor, texture(ourTexture, TexCoord), transitionTexture);
+	if (textureVType == 1)
+		FragColor *= mix(baseColor, texture(ourTexture, TexCoordMtl), transitionTexture);
+	else
+		FragColor *= mix(baseColor, texture(ourTexture, TexCoord), transitionTexture);
 	// apply noise
 	FragColor *= mix(baseColor, FragColor*noise(FragPos.xy), transitionNoise);
 	// apply Black n White

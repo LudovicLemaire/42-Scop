@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <time.h>
-#include <wow.h>
+#include <scop.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <dirent.h>
@@ -13,121 +13,7 @@
 #include <math.h>
 #include <unistd.h>
 
-char *stringCopy(char *str) {
-	int len = strlen(str);
-	char *newStr = calloc(len, sizeof(char));
-	strcpy(newStr, str);
-
-	return newStr;
-}
-
-void mallocFailed() {
-	printf("\x1b[91mMalloc failed\x1b[0m\n");
-	exit(0);
-}
-
-int EndsWith(const char *str, const char *suffix)
-{
-    if (!str || !suffix)
-        return 0;
-    size_t lenstr = strlen(str);
-    size_t lensuffix = strlen(suffix);
-    if (lensuffix >  lenstr)
-        return 0;
-    return strncmp(str + lenstr - lensuffix, suffix, lensuffix) == 0;
-}
-
-void print_vertex(t_vec *vertex, int size) {
-    int i = 0;
-    while (i < size) {
-        printf("vertex[%d]: %f %f %f\n", i, vertex[i].x, vertex[i].y, vertex[i].z);
-        ++i;
-    }
-}
-
-void print_buffer(GLfloat *buffer, int size) {
-    int i = 0;
-    while (size--) {
-        printf("%f, %f, %f,   %f, %f, %f,   %f, %f, %f\n", buffer[i], buffer[i+1], buffer[i+2], buffer[i+3], buffer[i+4], buffer[i+5], buffer[i+6], buffer[i+7], buffer[i+8]);
-        i += BUFFER_LENGTH;
-    }
-}
-
-void getMinMax(GLfloat *buffer, int size, t_obj_spec *mm) {
-    int i = 0;
-
-    while (size--) {
-        mm->x_max = fmax(mm->x_max, buffer[i]);
-        mm->x_min = fmin(mm->x_min, buffer[i]);
-        mm->y_max = fmax(mm->y_max, buffer[i+1]);
-        mm->y_min = fmin(mm->y_min, buffer[i+1]);
-        mm->z_max = fmax(mm->z_max, buffer[i+2]);
-        mm->z_min = fmin(mm->z_min, buffer[i+2]);
-        i += BUFFER_LENGTH;
-    }
-}
-
-t_vec getNormal(t_vec p1, t_vec p2, t_vec p3) {
-    t_vec u;
-    t_vec v;
-    t_vec n;
-    
-    u.x = p2.x - p1.x;
-    u.y = p2.y - p1.y;
-    u.z = p2.z - p1.z;
-    
-    v.x = p3.x - p1.x;
-    v.y = p3.y - p1.y;
-    v.z = p3.z - p1.z;
-    
-    n.x = u.y * v.z - u.z * v.y;
-    n.y = u.z * v.x - u.x * v.z;
-    n.z = u.x * v.y - u.y * v.x;
-    return n;
-}
-
-void getLengthMiddle(t_obj_spec *mm) {
-    mm->x_length = fabs(mm->x_min - mm->x_max);
-    mm->x_center = (mm->x_max + mm->x_min) / 2;
-    mm->y_length = fabs(mm->y_min - mm->y_max);
-    mm->y_center = (mm->y_max + mm->y_min) / 2;
-    mm->z_length = fabs(mm->z_min - mm->z_max);
-    mm->z_center = (mm->z_max + mm->z_min) / 2;
-}
-
-void fill_vertex(t_vec *vertex, float x, float y, float z) {
-    vertex->x = x;
-    vertex->y = y;
-    vertex->z = z;
-}
-
-t_rgb fill_rgb(float r, float g, float b) {
-	t_rgb rgb;
-	rgb.r = r;
-	rgb.g = g;
-	rgb.b = b;
-
-	return rgb;
-}
-
-float copyGetRC() {
-    float color = (float)rand() / (float)RAND_MAX;
-    return color;
-}
-
-char* concat(const char *s1, const char *s2)
-{
-    char *result = calloc(strlen(s1) + strlen(s2) + 1, sizeof(char));
-	if (!result) {
-		printf("15'\n");
-		mallocFailed();
-	}
-    strcpy(result, s1);
-    strcat(result, s2);
-    return result;
-}
-
-void setFace(GLfloat **buffer, int *j, int *face_inc, GLfloat x, GLfloat y, GLfloat z, t_rgb rgbRand, t_rgb rgbMtl, t_vec normal, GLfloat x_texture, GLfloat y_texture) {
+void setFace(GLfloat **buffer, int *j, int *face_inc, GLfloat x, GLfloat y, GLfloat z, t_rgb rgbRand, t_rgb rgbMtl, t_vec3 normal, GLfloat xTexture, GLfloat yTexture, GLfloat xTextureMtl, GLfloat yTextureMtl) {
     (*buffer)[(*j)++] = x;
     (*buffer)[(*j)++] = y;
     (*buffer)[(*j)++] = z;
@@ -140,31 +26,14 @@ void setFace(GLfloat **buffer, int *j, int *face_inc, GLfloat x, GLfloat y, GLfl
     (*buffer)[(*j)++] = normal.x;
     (*buffer)[(*j)++] = normal.y;
     (*buffer)[(*j)++] = normal.z;
-	(*buffer)[(*j)++] = x_texture;
-	(*buffer)[(*j)++] = y_texture;
+	(*buffer)[(*j)++] = xTexture;
+	(*buffer)[(*j)++] = yTexture;
+	(*buffer)[(*j)++] = xTextureMtl;
+	(*buffer)[(*j)++] = yTextureMtl;
     ++(*face_inc);
 }
 
-t_vec fill_vec(float x, float y, float z) {
-	t_vec vec;
-	vec.x = x;
-	vec.y = y;
-	vec.z = z;
-
-	return vec;
-}
-
-void getPrePath(char *file, char path[256]) {
-    size_t i;
-    size_t len = strlen(file);
-
-    memset(path, 0, 256 * sizeof(char));
-    for (i = len - 1 ; i > 0; i--)
-        if (file[i] == '/')
-            strncpy(path, file, i + 1);
-}
-
-void parser(GLfloat **buffer, int *sizeMallocFaces, char *filename, t_obj_spec *mm) {
+void parser(GLfloat **buffer, int *sizeMallocFaces, char *filename, t_obj_spec *mm, int *hasVT) {
     srand(time(NULL));
     if (access(filename, F_OK ) != 0 || !EndsWith(filename, ".obj")) {
         printf("\x1b[91mObj Path\x1b[0m: %s\n", filename);
@@ -177,38 +46,38 @@ void parser(GLfloat **buffer, int *sizeMallocFaces, char *filename, t_obj_spec *
 
     struct stat file_info;
     stat(filename, &file_info);
+	// Initialize MallocSize value from file size so it's neither too big, nor will do too much realloc
     int sizeMallocVertex = file_info.st_size / 50;
-	int sizeMallocNormal = file_info.st_size / 50;
+	int sizeMallocVN = file_info.st_size / 50;
+	int sizeMallocVT = file_info.st_size / 50;
 	int sizeMallocMaterials = 10;
     *sizeMallocFaces = sizeMallocVertex * BUFFER_LENGTH;
 
-    t_vec *vertex = calloc(sizeMallocVertex, sizeof(t_vec));
-	if (!vertex){
-		printf("1\n");
-		mallocFailed();
-	}
+	// Calloc buffers
+    t_vec3 *vertex = calloc(sizeMallocVertex, sizeof(t_vec3));
+	if (!vertex)
+		mallocFailed("Vertex calloc");
     *buffer = calloc(*sizeMallocFaces, sizeof(GLfloat));
-	if (!*buffer) {
-		printf("2\n");
-		mallocFailed();
-	}
-	t_vec *normal_buff = calloc(sizeMallocNormal, sizeof(t_vec));
-	if (!normal_buff) {
-		printf("3\n");
-		mallocFailed();
-	}
+	if (!*buffer)
+		mallocFailed("Complete buffer calloc");
+	t_vec3 *normalBuff = calloc(sizeMallocVertex, sizeof(t_vec3));
+	if (!normalBuff)
+		mallocFailed("Normal calloc");
+	t_vec2 *vertexTextureBuff = calloc(sizeMallocVertex, sizeof(t_vec2));
+	if (!vertexTextureBuff)
+		mallocFailed("Texture calloc");
 	t_materials *materials = calloc(sizeMallocMaterials, sizeof(t_materials));
-	if (!materials) {
-		printf("4\n");
-		mallocFailed();
-	}
+	if (!materials)
+		mallocFailed("Material calloc");
+	
     size_t linesize = 0;
     char* linebuf = 0;
     ssize_t linelen = 0;
     float x, y, z;
-    int a_point, a_texture, a_normal, b_point, b_texture, b_normal, c_point, c_texture, c_normal, d_point, d_normal, e_point;
+    int a_point, a_texture, a_normal, b_point, b_texture, b_normal, c_point, c_texture, c_normal, d_point, d_normal, d_texture, e_point;
     int vertex_inc = 0;
-	int normal_inc = 0;
+	int vn_inc = 0;
+	int vt_inc = 0;
     int face_inc = 0;
 	char mtl_reduced_path[256];
 	char *mtl_path;
@@ -219,30 +88,42 @@ void parser(GLfloat **buffer, int *sizeMallocFaces, char *filename, t_obj_spec *
 	int haveMtl = 0;
 
     while ((linelen = getline(&linebuf, &linesize, inputfile)) > 0) {
-        // realloc
-        if (vertex_inc + 1 >= sizeMallocVertex) {
+        // Realloc buffer Vertex if necessary
+		if (vertex_inc + 1 >= sizeMallocVertex) {
             sizeMallocVertex *= 1.5;
             printf("sizeMallocVertex: %d\n", sizeMallocVertex);
-            vertex = realloc(vertex, (sizeMallocVertex) * sizeof(t_vec));
-			if (!vertex) {
-				printf("10\n");
-				mallocFailed();
-			}
+            vertex = realloc(vertex, (sizeMallocVertex) * sizeof(t_vec3));
+			if (!vertex)
+				mallocFailed("Vertex realloc");
         }
+		// Realloc buffer Normal if necessary
+        if (vn_inc + 1 >= sizeMallocVN) {
+            sizeMallocVN *= 1.5;
+            printf("sizeMallocVN: %d\n", sizeMallocVN);
+			normalBuff = realloc(normalBuff, (sizeMallocVN) * sizeof(t_vec3));
+			if (!normalBuff)
+				mallocFailed("Normal realloc");
+        }
+		// Realloc buffer Texture if necessary
+		if (vt_inc + 1 >= sizeMallocVT) {
+            sizeMallocVT *= 1.5;
+            printf("sizeMallocVT: %d\n", sizeMallocVT);
+			vertexTextureBuff = realloc(vertexTextureBuff, (sizeMallocVT) * sizeof(t_vec2));
+			if (!vertexTextureBuff)
+				mallocFailed("Texture realloc");
+        }
+		// Realloc buffer Face if necessary
         if ((face_inc + 1) * 18 >= *sizeMallocFaces) {
             *sizeMallocFaces *= 1.5;
-            printf("\x1b[93msizeMallocFaces:\x1b[0m %d\n", *sizeMallocFaces);
+            printf("\x1b[93mRealloc bufferFace:\x1b[0m %d\n", *sizeMallocFaces);
             *buffer = realloc(*buffer, *sizeMallocFaces * sizeof(GLfloat));
-			if (!*buffer) {
-				printf("9\n");
-				mallocFailed();
-			}
+			if (!*buffer)
+				mallocFailed("Face realloc");
         }
-
+		// Get RGB associated to the Material and store it to add them to buffer (which have this Material)
 		if (sscanf(linebuf, "usemtl %s", materialName) == 1) {
 			if (haveMtl) {
 				int lenMaterials = totalMaterials;
-
 				while (lenMaterials--) {
 					if (strcmp(materialName, materials[lenMaterials].name) == 0) { 
 						rgbMtl = fill_rgb(materials[lenMaterials].rgb.r, materials[lenMaterials].rgb.g, materials[lenMaterials].rgb.b);
@@ -251,8 +132,9 @@ void parser(GLfloat **buffer, int *sizeMallocFaces, char *filename, t_obj_spec *
 			}
 		}
 
-		// mtl file
+		// Parse MTL file to get colors (texture aren't handled)
         else if (sscanf(linebuf, "mtllib %s", mtl_reduced_path) == 1) {
+			// Find path for .mtl and check if the file exist
 			char prePath[256];
 			getPrePath(filename, prePath);
 			mtl_path = concat(prePath, mtl_reduced_path);
@@ -271,150 +153,208 @@ void parser(GLfloat **buffer, int *sizeMallocFaces, char *filename, t_obj_spec *
 			haveMtl = 1;
 
 			while ((linelenMtl = getline(&linebufMtl, &linesizeMtl, mtlFile)) > 0) {
+				// Store every material names
 				if (sscanf(linebufMtl, "newmtl %s", nameMaterial) == 1) {
 					if (totalMaterials+1 > sizeMallocMaterials) {
 						sizeMallocMaterials += 10;
 						materials = realloc(materials, (sizeMallocMaterials) * sizeof(t_materials));
 						if (!materials) {
-							printf("8\n");
-							mallocFailed();
+							mallocFailed("Material realloc");
 						}
 					}
 					materials[totalMaterials].name = strdup(nameMaterial);
 					++totalMaterials;
 				}
+				// Store Kd (colors) associated for each materials
 				if (sscanf(linebufMtl, "Kd %f %f %f", &r, &g, &b) == 3) {
 					t_rgb rgb = fill_rgb(r, g, b);
 					materials[totalMaterials-1].rgb = rgb;
 				}
-				////printf("FREE linebufMtl 1\n");
 				free(linebufMtl);
         		linebufMtl = NULL;
 			}
-			//printf("FREE linebufMtl 2\n");
 			free(linebufMtl);
         	linebufMtl = NULL;
 			fclose(mtlFile);
         }
 
-
-
-        // vertex
+        // Handle and store vertex
         else if (sscanf(linebuf, "v %f %f %f", &x, &y, &z) == 3) {
-            fill_vertex(&vertex[vertex_inc], x, y, z);
+            fill_vertex3d(&vertex[vertex_inc], x, y, z);
             ++vertex_inc;
         }
-
-		// normal
+		// Handle and store normal vn
         else if (sscanf(linebuf, "vn %f %f %f", &x, &y, &z) == 3) {
-            fill_vertex(&normal_buff[normal_inc], x, y, z);
-            ++normal_inc;
+            fill_vertex3d(&normalBuff[vn_inc], x, y, z);
+            ++vn_inc;
+        }
+		// Handle and store texture vt
+        else if (sscanf(linebuf, "vt %f %f", &x, &y) == 2) {
+            fill_vertex2d(&vertexTextureBuff[vt_inc], x, y);
+            ++vt_inc;
+			*hasVT = 1;
         }
 
-        // create random color
-        t_rgb rgbRand = fill_rgb(copyGetRC(), copyGetRC(), copyGetRC());
+        // Generate random color for a face
+        t_rgb rgbRand = fill_rgb(getRC(), getRC(), getRC());
         int j = face_inc * BUFFER_LENGTH;
-        if (sscanf(linebuf, "f %d/%d/%d %d/%d/%d %d/%d/%d", &a_point, &a_texture, &a_normal, &b_point, &b_texture, &b_normal, &c_point, &c_texture, &c_normal) == 9) {
-            t_vec normal = fill_vec(-normal_buff[a_normal-1].x, -normal_buff[a_normal-1].y, -normal_buff[a_normal-1].z);
-            setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal, 0.0, 0.0);
-            setFace(buffer, &j, &face_inc, vertex[b_point-1].x, vertex[b_point-1].y, vertex[b_point-1].z, rgbRand, rgbMtl, normal, 0.0, 1.0);
-            setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgbRand, rgbMtl, normal, 1.0, 1.0);
-        }
-		else if (sscanf(linebuf, "f %d//%d %d//%d %d//%d %d//%d", &a_point, &a_normal, &b_point, &b_normal, &c_point, &c_normal, &d_point, &d_normal) == 8) {
-			t_vec normal = fill_vec(-normal_buff[b_normal-1].x, -normal_buff[b_normal-1].y, -normal_buff[b_normal-1].z);
-            setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal, 0.0, 0.0);
-            setFace(buffer, &j, &face_inc, vertex[b_point-1].x, vertex[b_point-1].y, vertex[b_point-1].z, rgbRand, rgbMtl, normal, 0.0, 1.0);
-            setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgbRand, rgbMtl, normal, 1.0, 1.0);
-
-            normal = fill_vec(-normal_buff[c_normal-1].x, -normal_buff[c_normal-1].y, -normal_buff[c_normal-1].z);
-            setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal, 0.0, 0.0);
-            setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgbRand, rgbMtl, normal, 0.0, 1.0);
-            setFace(buffer, &j, &face_inc, vertex[d_point-1].x, vertex[d_point-1].y, vertex[d_point-1].z, rgbRand, rgbMtl, normal, 1.0, 1.0);
-        }
-        else if (sscanf(linebuf, "f %d %d %d", &a_point, &b_point, &c_point) == 3) {
-            t_vec normal = getNormal(vertex[a_point-1], vertex[b_point-1], vertex[c_point-1]);
-            setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal, 0.0, 0.0);
-            setFace(buffer, &j, &face_inc, vertex[b_point-1].x, vertex[b_point-1].y, vertex[b_point-1].z, rgbRand, rgbMtl, normal, 0.0, 1.0);
-            setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgbRand, rgbMtl, normal, 1.0, 1.0);
-        }
-        else if (sscanf(linebuf, "f %d/%d %d/%d %d/%d", &a_point, &a_texture, &b_point, &b_texture, &c_point, &c_texture) == 6) {
-            t_vec normal = getNormal(vertex[a_point-1], vertex[b_point-1], vertex[c_point-1]);
-            setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal, 0.0, 0.0);
-            setFace(buffer, &j, &face_inc, vertex[b_point-1].x, vertex[b_point-1].y, vertex[b_point-1].z, rgbRand, rgbMtl, normal, 0.0, 1.0);
-            setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgbRand, rgbMtl, normal, 1.0, 1.0);
-        }
-        else if (sscanf(linebuf, "f %d//%d %d//%d %d//%d", &a_point, &a_normal, &b_point, &b_normal, &c_point, &c_normal) == 6) {
-			t_vec normal = fill_vec(-normal_buff[a_normal-1].x, -normal_buff[a_normal-1].y, -normal_buff[a_normal-1].z);
-            setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal, 0.0, 0.0);
-            setFace(buffer, &j, &face_inc, vertex[b_point-1].x, vertex[b_point-1].y, vertex[b_point-1].z, rgbRand, rgbMtl, normal, 0.0, 1.0);
-            setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgbRand, rgbMtl, normal, 1.0, 1.0);
-        }
-        else if (sscanf(linebuf, "f %d %d %d %d", &a_point, &b_point, &c_point, &d_point) == 4) {
-            t_vec normal = getNormal(vertex[a_point-1], vertex[b_point-1], vertex[c_point-1]);
-            setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal, 0.0, 0.0);
-            setFace(buffer, &j, &face_inc, vertex[b_point-1].x, vertex[b_point-1].y, vertex[b_point-1].z, rgbRand, rgbMtl, normal, 0.0, 1.0);
-            setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgbRand, rgbMtl, normal, 1.0, 1.0);
+		// Contain 5 points
+		if (sscanf(linebuf, "f %d %d %d %d %d", &a_point, &b_point, &c_point, &d_point, &e_point) == 5) {
+			if (a_point > vertex_inc || b_point > vertex_inc || c_point > vertex_inc || d_point > vertex_inc || e_point > vertex_inc) {
+				printf("\x1b[91mError obj file\x1b[0m\n");
+				exit(0);
+			}
+            t_vec3 normal = getNormal(vertex[a_point-1], vertex[b_point-1], vertex[c_point-1]);
+            setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal, 0.0, 0.0, 0.0, 0.0);
+            setFace(buffer, &j, &face_inc, vertex[b_point-1].x, vertex[b_point-1].y, vertex[b_point-1].z, rgbRand, rgbMtl, normal, 0.0, 1.0, 0.0, 0.0);
+            setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgbRand, rgbMtl, normal, 1.0, 1.0, 0.0, 0.0);
 
             normal = getNormal(vertex[a_point-1], vertex[c_point-1], vertex[d_point-1]);
-            setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal, 0.0, 0.0);
-            setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgbRand, rgbMtl, normal, 0.0, 1.0);
-            setFace(buffer, &j, &face_inc, vertex[d_point-1].x, vertex[d_point-1].y, vertex[d_point-1].z, rgbRand, rgbMtl, normal, 1.0, 1.0);
-        }
-        else if (sscanf(linebuf, "f %d %d %d %d %d", &a_point, &b_point, &c_point, &d_point, &e_point) == 5) {
-            t_vec normal = getNormal(vertex[a_point-1], vertex[b_point-1], vertex[c_point-1]);
-            setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal, 0.0, 0.0);
-            setFace(buffer, &j, &face_inc, vertex[b_point-1].x, vertex[b_point-1].y, vertex[b_point-1].z, rgbRand, rgbMtl, normal, 0.0, 1.0);
-            setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgbRand, rgbMtl, normal, 1.0, 1.0);
-
-            normal = getNormal(vertex[a_point-1], vertex[c_point-1], vertex[d_point-1]);
-            setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal, 0.0, 0.0);
-            setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgbRand, rgbMtl, normal, 0.0, 1.0);
-            setFace(buffer, &j, &face_inc, vertex[d_point-1].x, vertex[d_point-1].y, vertex[d_point-1].z, rgbRand, rgbMtl, normal, 1.0, 1.0);
+            setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal, 0.0, 0.0, 0.0, 0.0);
+            setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgbRand, rgbMtl, normal, 0.0, 1.0, 0.0, 0.0);
+            setFace(buffer, &j, &face_inc, vertex[d_point-1].x, vertex[d_point-1].y, vertex[d_point-1].z, rgbRand, rgbMtl, normal, 1.0, 1.0, 0.0, 0.0);
 
             normal = getNormal(vertex[a_point-1], vertex[d_point-1], vertex[e_point-1]);
-            setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal, 0.0, 0.0);
-            setFace(buffer, &j, &face_inc, vertex[d_point-1].x, vertex[d_point-1].y, vertex[d_point-1].z, rgbRand, rgbMtl, normal, 0.0, 1.0);
-            setFace(buffer, &j, &face_inc, vertex[e_point-1].x, vertex[e_point-1].y, vertex[e_point-1].z, rgbRand, rgbMtl, normal, 1.0, 1.0);
+            setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal, 0.0, 0.0, 0.0, 0.0);
+            setFace(buffer, &j, &face_inc, vertex[d_point-1].x, vertex[d_point-1].y, vertex[d_point-1].z, rgbRand, rgbMtl, normal, 0.0, 1.0, 0.0, 0.0);
+            setFace(buffer, &j, &face_inc, vertex[e_point-1].x, vertex[e_point-1].y, vertex[e_point-1].z, rgbRand, rgbMtl, normal, 1.0, 1.0, 0.0, 0.0);
         }
-		////printf("FREE linebuf 1\n");
+		// Contain 4 points/textures/normals
+        else if (sscanf(linebuf, "f %d/%d/%d %d/%d/%d %d/%d/%d %d/%d/%d", &a_point, &a_texture, &a_normal, &b_point, &b_texture, &b_normal, &c_point, &c_texture, &c_normal, &d_point, &d_texture, &d_normal) == 12) {
+            if (a_point > vertex_inc || b_point > vertex_inc || c_point > vertex_inc || d_point > vertex_inc ||
+			a_texture > vt_inc || b_texture > vt_inc || c_texture > vt_inc || d_texture > vt_inc ||
+			a_normal > vn_inc || b_normal > vn_inc || c_normal > vn_inc || d_normal > vn_inc) {
+				printf("\x1b[91mError obj file\x1b[0m\n");
+				exit(0);
+			}
+			t_vec3 normal = fill_vec(-normalBuff[a_normal-1].x, -normalBuff[a_normal-1].y, -normalBuff[a_normal-1].z);
+            setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal, 0.0, 0.0, vertexTextureBuff[a_texture-1].x, vertexTextureBuff[a_texture-1].y);
+            setFace(buffer, &j, &face_inc, vertex[b_point-1].x, vertex[b_point-1].y, vertex[b_point-1].z, rgbRand, rgbMtl, normal, 0.0, 1.0, vertexTextureBuff[b_texture-1].x, vertexTextureBuff[b_texture-1].y);
+            setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgbRand, rgbMtl, normal, 1.0, 1.0, vertexTextureBuff[c_texture-1].x, vertexTextureBuff[c_texture-1].y);
+
+			normal = fill_vec(-normalBuff[a_normal-1].x, -normalBuff[a_normal-1].y, -normalBuff[a_normal-1].z);
+            setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal, 0.0, 0.0, vertexTextureBuff[a_texture-1].x, vertexTextureBuff[a_texture-1].y);
+            setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgbRand, rgbMtl, normal, 0.0, 1.0, vertexTextureBuff[c_texture-1].x, vertexTextureBuff[c_texture-1].y);
+            setFace(buffer, &j, &face_inc, vertex[d_point-1].x, vertex[d_point-1].y, vertex[d_point-1].z, rgbRand, rgbMtl, normal, 1.0, 1.0, vertexTextureBuff[d_texture-1].x, vertexTextureBuff[d_texture-1].y);
+        }
+		// Contain 4 points
+		else if (sscanf(linebuf, "f %d %d %d %d", &a_point, &b_point, &c_point, &d_point) == 4) {
+			if (a_point > vertex_inc || b_point > vertex_inc || c_point > vertex_inc || d_point > vertex_inc) {
+				printf("\x1b[91mError obj file\x1b[0m\n");
+				exit(0);
+			}
+            t_vec3 normal = getNormal(vertex[a_point-1], vertex[b_point-1], vertex[c_point-1]);
+            setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal, 0.0, 0.0, 0.0, 0.0);
+            setFace(buffer, &j, &face_inc, vertex[b_point-1].x, vertex[b_point-1].y, vertex[b_point-1].z, rgbRand, rgbMtl, normal, 0.0, 1.0, 0.0, 0.0);
+            setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgbRand, rgbMtl, normal, 1.0, 1.0, 0.0, 0.0);
+
+            normal = getNormal(vertex[a_point-1], vertex[c_point-1], vertex[d_point-1]);
+            setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal, 0.0, 0.0, 0.0, 0.0);
+            setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgbRand, rgbMtl, normal, 0.0, 1.0, 0.0, 0.0);
+            setFace(buffer, &j, &face_inc, vertex[d_point-1].x, vertex[d_point-1].y, vertex[d_point-1].z, rgbRand, rgbMtl, normal, 1.0, 1.0, 0.0, 0.0);
+        }
+		// Contain 4 points/normals
+		else if (sscanf(linebuf, "f %d//%d %d//%d %d//%d %d//%d", &a_point, &a_normal, &b_point, &b_normal, &c_point, &c_normal, &d_point, &d_normal) == 8) {
+			if (a_point > vertex_inc || b_point > vertex_inc || c_point > vertex_inc || d_point > vertex_inc ||
+			a_normal > vn_inc || b_normal > vn_inc || c_normal > vn_inc || d_normal > vn_inc) {
+				printf("\x1b[91mError obj file\x1b[0m\n");
+				exit(0);
+			}
+			t_vec3 normal = fill_vec(-normalBuff[b_normal-1].x, -normalBuff[b_normal-1].y, -normalBuff[b_normal-1].z);
+            setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal, 0.0, 0.0, 0.0, 0.0);
+            setFace(buffer, &j, &face_inc, vertex[b_point-1].x, vertex[b_point-1].y, vertex[b_point-1].z, rgbRand, rgbMtl, normal, 0.0, 1.0, 0.0, 0.0);
+            setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgbRand, rgbMtl, normal, 1.0, 1.0, 0.0, 0.0);
+
+            normal = fill_vec(-normalBuff[c_normal-1].x, -normalBuff[c_normal-1].y, -normalBuff[c_normal-1].z);
+            setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal, 0.0, 0.0, 0.0, 0.0);
+            setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgbRand, rgbMtl, normal, 0.0, 1.0, 0.0, 0.0);
+            setFace(buffer, &j, &face_inc, vertex[d_point-1].x, vertex[d_point-1].y, vertex[d_point-1].z, rgbRand, rgbMtl, normal, 1.0, 1.0, 0.0, 0.0);
+        }
+		// Contain 4 points/textures
+		else if (sscanf(linebuf, "f %d/%d/%d %d/%d/%d %d/%d/%d", &a_point, &a_texture, &a_normal, &b_point, &b_texture, &b_normal, &c_point, &c_texture, &c_normal) == 9) {
+			if (a_point > vertex_inc || b_point > vertex_inc || c_point > vertex_inc ||
+			a_texture > vt_inc || b_texture > vt_inc || c_texture > vt_inc ||
+			a_normal > vn_inc || b_normal > vn_inc || c_normal > vn_inc) {
+				printf("\x1b[91mError obj file\x1b[0m\n");
+				exit(0);
+			}
+            t_vec3 normal = fill_vec(-normalBuff[a_normal-1].x, -normalBuff[a_normal-1].y, -normalBuff[a_normal-1].z);
+            setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal, 0.0, 0.0, vertexTextureBuff[a_texture-1].x, vertexTextureBuff[a_texture-1].y);
+            setFace(buffer, &j, &face_inc, vertex[b_point-1].x, vertex[b_point-1].y, vertex[b_point-1].z, rgbRand, rgbMtl, normal, 0.0, 1.0, vertexTextureBuff[b_texture-1].x, vertexTextureBuff[b_texture-1].y);
+            setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgbRand, rgbMtl, normal, 1.0, 1.0, vertexTextureBuff[c_texture-1].x, vertexTextureBuff[c_texture-1].y);
+        }
+		// Contain 3 points
+        else if (sscanf(linebuf, "f %d %d %d", &a_point, &b_point, &c_point) == 3) {
+			if (a_point > vertex_inc || b_point > vertex_inc || c_point > vertex_inc) {
+				printf("\x1b[91mError obj file\x1b[0m\n");
+				exit(0);
+			}
+            t_vec3 normal = getNormal(vertex[a_point-1], vertex[b_point-1], vertex[c_point-1]);
+            setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal, 0.0, 0.0, 0.0, 0.0);
+            setFace(buffer, &j, &face_inc, vertex[b_point-1].x, vertex[b_point-1].y, vertex[b_point-1].z, rgbRand, rgbMtl, normal, 0.0, 1.0, 0.0, 0.0);
+            setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgbRand, rgbMtl, normal, 1.0, 1.0, 0.0, 0.0);
+        }
+		// Contain 3 points/textures
+        else if (sscanf(linebuf, "f %d/%d %d/%d %d/%d", &a_point, &a_texture, &b_point, &b_texture, &c_point, &c_texture) == 6) {
+			if (a_point > vertex_inc || b_point > vertex_inc || c_point > vertex_inc ||
+			a_texture > vt_inc || b_texture > vt_inc || c_texture > vt_inc) {
+				printf("\x1b[91mError obj file\x1b[0m\n");
+				exit(0);
+			}
+            t_vec3 normal = getNormal(vertex[a_point-1], vertex[b_point-1], vertex[c_point-1]);
+            setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal, 0.0, 0.0, 0.0, 0.0);
+            setFace(buffer, &j, &face_inc, vertex[b_point-1].x, vertex[b_point-1].y, vertex[b_point-1].z, rgbRand, rgbMtl, normal, 0.0, 1.0, 0.0, 0.0);
+            setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgbRand, rgbMtl, normal, 1.0, 1.0, 0.0, 0.0);
+        }
+		// Contain 3 points/normals
+        else if (sscanf(linebuf, "f %d//%d %d//%d %d//%d", &a_point, &a_normal, &b_point, &b_normal, &c_point, &c_normal) == 6) {
+			if (a_point > vertex_inc || b_point > vertex_inc || c_point > vertex_inc ||
+			a_normal > vn_inc || b_normal > vn_inc || c_normal > vn_inc) {
+				printf("\x1b[91mError obj file\x1b[0m\n");
+				exit(0);
+			}
+			t_vec3 normal = fill_vec(-normalBuff[a_normal-1].x, -normalBuff[a_normal-1].y, -normalBuff[a_normal-1].z);
+            setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal, 0.0, 0.0, 0.0, 0.0);
+            setFace(buffer, &j, &face_inc, vertex[b_point-1].x, vertex[b_point-1].y, vertex[b_point-1].z, rgbRand, rgbMtl, normal, 0.0, 1.0, 0.0, 0.0);
+            setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgbRand, rgbMtl, normal, 1.0, 1.0, 0.0, 0.0);
+        }
         free(linebuf);
         linebuf = NULL;
     }
-	// free
-	//printf("FREE linebuf 2\n");
+	// Free all buffers
     free(linebuf);
     linebuf = NULL;
-	//printf("FREE vertex\n");
     free(vertex);
     vertex = NULL;
-	//printf("FREE normalbuf\n");
-	free(normal_buff);
-    normal_buff = NULL;
+	free(normalBuff);
+    normalBuff = NULL;
+	free(vertexTextureBuff);
+    vertexTextureBuff = NULL;
+	// Free mtl path if it exists
 	if (haveMtl) {
 		free(mtl_path);
 		mtl_path = NULL;
 	}
+	// Free every materials
 	int lenMaterials = totalMaterials;
 	while (lenMaterials--) {
-		//printf("FREE material %d\n", lenMaterials);
 		free(materials[lenMaterials].name);
 		materials[lenMaterials].name = NULL;
 	}
-	//printf("FREE material struct\n");
 	free(materials);
 	materials = NULL;
 	fclose(inputfile);
-	//realloc buffer to correct size
+
+	// Realloc buffer to correct size
     *buffer = realloc(*buffer, ((face_inc * 3 * BUFFER_LENGTH) + 1) * sizeof(GLfloat));
-	if (!*buffer) {
-		printf("7\n");
-		mallocFailed();
-	}
+	if (!*buffer)
+		mallocFailed("Complete buffer realloc");
 
     *sizeMallocFaces = (face_inc * BUFFER_LENGTH);
 
     printf("\x1b[94mNombre de triangles:\x1b[0m %d\n", face_inc/3);
 
+	// initialize min/max
     mm->x_min = FLT_MAX;
     mm->y_min = FLT_MAX;
     mm->z_min = FLT_MAX;

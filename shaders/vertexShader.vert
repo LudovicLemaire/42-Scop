@@ -4,11 +4,13 @@ layout (location = 1) in vec3 aRCol;
 layout (location = 2) in vec3 aMtlCol;
 layout (location = 3) in vec3 aNor;
 layout (location = 4) in vec2 aTex;
+layout (location = 5) in vec2 aTexMtl;
 out vec3 normal;
 out vec4 rColor;
 out vec4 mtlColor;
 out vec3 FragPos;
 out vec2 TexCoord;
+out vec2 TexCoordMtl;
 uniform mat4 matriceFinal;
 uniform mat4 matricePerspective;
 uniform float pointSize;
@@ -20,4 +22,5 @@ void main() {
 	rColor = vec4(aRCol, 1.0);
 	mtlColor = vec4(aMtlCol, 1.0);
 	TexCoord = aTex;
+	TexCoordMtl = aTexMtl;
 }
