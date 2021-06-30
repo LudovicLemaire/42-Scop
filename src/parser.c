@@ -362,6 +362,10 @@ void parser(GLfloat **buffer, int *sizeMallocFaces, char *filename, t_obj_spec *
 
     getMinMax(*buffer, face_inc, mm);
     getLengthMiddle(mm);
+	if (!face_inc) {
+		printf("\x1b[91mThere is no face ¯\\_(ツ)_/¯ \x1b[0m\n");
+		exit(0);
+	}
     //print_vertex(vertex, vertex_inc);
     // print_buffer(*buffer, face_inc);
 }
