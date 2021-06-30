@@ -1,17 +1,5 @@
-#include <stdio.h>
-#include <GL/gl3w.h>
-#include <errno.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <time.h>
 #include <scop.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <dirent.h>
-#include <string.h>
-#include <float.h>
-#include <math.h>
-#include <unistd.h>
+
 
 void setFace(GLfloat **buffer, int *j, int *face_inc, GLfloat x, GLfloat y, GLfloat z, t_rgb rgbRand, t_rgb rgbMtl, t_vec3 normal, GLfloat xTexture, GLfloat yTexture, GLfloat xTextureMtl, GLfloat yTextureMtl) {
     (*buffer)[(*j)++] = x;
@@ -52,6 +40,10 @@ void parser(GLfloat **buffer, int *sizeMallocFaces, char *filename, t_obj_spec *
     }
 
     FILE *inputfile = fopen(filename, "r");
+	if (!inputfile) {
+		printf("\x1b[91mError file\n");
+        exit(-1);
+	}
 
     struct stat file_info;
     stat(filename, &file_info);
@@ -172,6 +164,8 @@ void parser(GLfloat **buffer, int *sizeMallocFaces, char *filename, t_obj_spec *
 						}
 					}
 					materials[totalMaterials].name = strdup(nameMaterial);
+					if (!materials[totalMaterials].name)
+						mallocFailed("materials[totalMaterials].name realloc");
 					++totalMaterials;
 				}
 				// Store Kd (colors) associated for each materials

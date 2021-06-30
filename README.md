@@ -28,30 +28,26 @@ make
 ```
 
 ## Bonus:
-
 #### Lights:
 * Ambient light
 * Directionnal light
 * Specular light
-
 ### MTL:
 * Get materials from MTL file (only kd for texture, not images)
-
 ### Normals/Texture:
 * Get vertex normal (vn) from obj and apply them
 * Get vertex texture (vt) from obj and apply them
 * Calculate my own vt/vn if the file doesn't have it
-
 ### Rendering modes:
 * Fill
 * Wireframe
 * Point
-
 ### Noise
 * Noise mode from Gelfond–Schneider constant
-
 ### Multifaces:
 * Work up to 5 vertex for one face (it will triangulate)
+### Auto rescale/recenter
+* Calculate during parsing to put the object at center, and resize it to be correctly visible
 
 ## Examples:
 

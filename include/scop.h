@@ -4,6 +4,18 @@
 # define TIME_TRANSITION_S 2
 # include <GL/gl3w.h>
 # include <GLFW/glfw3.h>
+#include <stdio.h>
+#include <errno.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <time.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <dirent.h>
+#include <string.h>
+#include <float.h>
+#include <math.h>
+#include <unistd.h>
 
 typedef struct			s_vec3 {
 	float				x;

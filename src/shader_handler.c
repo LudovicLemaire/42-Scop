@@ -1,10 +1,4 @@
 #include <scop.h>
-#include <stdio.h>
-#include <GL/gl3w.h>
-#include <stdlib.h>
-#include <sys/stat.h>
-#include <string.h>
-#include <unistd.h>
 
 char *shaderParser(char *path) {
     if (access(path, F_OK ) != 0) {

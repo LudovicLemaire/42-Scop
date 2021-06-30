@@ -1,28 +1,6 @@
-#include <stdio.h>
-#include <GL/gl3w.h>
-#include <GLFW/glfw3.h>
-#include <errno.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <time.h>
 #include <scop.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <dirent.h>
-#include <string.h>
-#include <float.h>
-#include <math.h>
-#include <unistd.h>
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
-
-char* stringCopy(char* str) {
-	int len = strlen(str);
-	char *newStr = calloc(len, sizeof(char));
-	strcpy(newStr, str);
-
-	return newStr;
-}
 
 void mallocFailed(char *text) {
 	printf("\x1b[91mMalloc failed\x1b[0m: %s\n", text);
@@ -82,12 +60,9 @@ t_vec3 getNormal(t_vec3 p1, t_vec3 p2, t_vec3 p3) {
     v.y = p3.y - p1.y;
     v.z = p3.z - p1.z;
     
-    n.x = u.y * v.z - u.z * v.y;
-    n.y = u.z * v.x - u.x * v.z;
-    n.z = u.x * v.y - u.y * v.x;
-	n.x *= -1; 
-	n.y *= -1; 
-	n.z *= -1; 
+    n.x = u.z * v.y - u.y * v.z;
+    n.y = u.x * v.z - u.z * v.x;
+    n.z = u.y * v.x - u.x * v.y;
     return n;
 }
 
@@ -131,7 +106,7 @@ t_rgb fill_rgb(float r, float g, float b) {
 
 // Create random color
 float getRC() {
-    float color = (float)rand() / (float)RAND_MAX;
+    float color = (float)rand() / RAND_MAX;
     return color;
 }
 

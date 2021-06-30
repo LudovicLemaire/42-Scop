@@ -1,5 +1,4 @@
 #include <scop.h>
-#include <GLFW/glfw3.h>
 
 void keyCallback(GLFWwindow *window, t_keys_hook *keys_hook, t_hook_params *hook_params, const char **textures) {
     checkKey(window, GLFW_KEY_R, &keys_hook->r);

@@ -1,14 +1,4 @@
-#include <GL/gl3w.h>
-#include <GLFW/glfw3.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <math.h>
 #include <scop.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <string.h>
 
 int main(int ac, char *av[]) {
 	// Exit if obj file is missing
@@ -52,13 +42,17 @@ int main(int ac, char *av[]) {
     int bufferSize;
     t_obj_spec *mm;
     mm = calloc(1, sizeof(t_obj_spec));
+	if (!mm)
+		mallocFailed("min/max failed");
 	int hasVT = 0;
 	// Get vertex buffer, and Min/Max to rescale
     parser(&g_vertex_buffer_data, &bufferSize, av[1], mm, &hasVT);
 
     t_keys_hook *keys_hook;
     keys_hook = calloc(1, sizeof(t_keys_hook));
-    
+    if (!keys_hook)
+		mallocFailed("keys_hook failed");
+
     GLuint vertexbuffer;
     GLuint vao;
 
