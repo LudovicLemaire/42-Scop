@@ -33,6 +33,15 @@ void setFace(GLfloat **buffer, int *j, int *face_inc, GLfloat x, GLfloat y, GLfl
     ++(*face_inc);
 }
 
+void checkObjValues(int *arr, int size, int vMax) {
+	while(--size) {
+		if (arr[size] > vMax || arr[size] < 1) {
+			printf("\x1b[91mError obj file\x1b[0m\n");
+			exit(0);
+		}
+	}
+}
+
 void parser(GLfloat **buffer, int *sizeMallocFaces, char *filename, t_obj_spec *mm, int *hasVT) {
     srand(time(NULL));
     if (access(filename, F_OK ) != 0 || !EndsWith(filename, ".obj")) {
@@ -200,10 +209,7 @@ void parser(GLfloat **buffer, int *sizeMallocFaces, char *filename, t_obj_spec *
         int j = face_inc * BUFFER_LENGTH;
 		// Contain 5 points
 		if (sscanf(linebuf, "f %d %d %d %d %d", &a_point, &b_point, &c_point, &d_point, &e_point) == 5) {
-			if (a_point > vertex_inc || b_point > vertex_inc || c_point > vertex_inc || d_point > vertex_inc || e_point > vertex_inc) {
-				printf("\x1b[91mError obj file\x1b[0m\n");
-				exit(0);
-			}
+			checkObjValues((int[5]){a_point, b_point, c_point, d_point, e_point}, 5, vertex_inc);
             t_vec3 normal = getNormal(vertex[a_point-1], vertex[b_point-1], vertex[c_point-1]);
             setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal, 0.0, 0.0, 0.0, 0.0);
             setFace(buffer, &j, &face_inc, vertex[b_point-1].x, vertex[b_point-1].y, vertex[b_point-1].z, rgbRand, rgbMtl, normal, 0.0, 1.0, 0.0, 0.0);
@@ -221,12 +227,9 @@ void parser(GLfloat **buffer, int *sizeMallocFaces, char *filename, t_obj_spec *
         }
 		// Contain 4 points/textures/normals
         else if (sscanf(linebuf, "f %d/%d/%d %d/%d/%d %d/%d/%d %d/%d/%d", &a_point, &a_texture, &a_normal, &b_point, &b_texture, &b_normal, &c_point, &c_texture, &c_normal, &d_point, &d_texture, &d_normal) == 12) {
-            if (a_point > vertex_inc || b_point > vertex_inc || c_point > vertex_inc || d_point > vertex_inc ||
-			a_texture > vt_inc || b_texture > vt_inc || c_texture > vt_inc || d_texture > vt_inc ||
-			a_normal > vn_inc || b_normal > vn_inc || c_normal > vn_inc || d_normal > vn_inc) {
-				printf("\x1b[91mError obj file\x1b[0m\n");
-				exit(0);
-			}
+			checkObjValues((int[4]){a_point, b_point, c_point, d_point}, 4, vertex_inc);
+			checkObjValues((int[4]){a_texture, b_texture, c_texture, d_texture}, 4, vt_inc);
+			checkObjValues((int[4]){a_normal, b_normal, c_normal, d_normal}, 4, vn_inc);
 			t_vec3 normal = fill_vec(-normalBuff[a_normal-1].x, -normalBuff[a_normal-1].y, -normalBuff[a_normal-1].z);
             setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal, 0.0, 0.0, vertexTextureBuff[a_texture-1].x, vertexTextureBuff[a_texture-1].y);
             setFace(buffer, &j, &face_inc, vertex[b_point-1].x, vertex[b_point-1].y, vertex[b_point-1].z, rgbRand, rgbMtl, normal, 0.0, 1.0, vertexTextureBuff[b_texture-1].x, vertexTextureBuff[b_texture-1].y);
@@ -239,10 +242,7 @@ void parser(GLfloat **buffer, int *sizeMallocFaces, char *filename, t_obj_spec *
         }
 		// Contain 4 points
 		else if (sscanf(linebuf, "f %d %d %d %d", &a_point, &b_point, &c_point, &d_point) == 4) {
-			if (a_point > vertex_inc || b_point > vertex_inc || c_point > vertex_inc || d_point > vertex_inc) {
-				printf("\x1b[91mError obj file\x1b[0m\n");
-				exit(0);
-			}
+			checkObjValues((int[4]){a_point, b_point, c_point, d_point}, 4, vertex_inc);
             t_vec3 normal = getNormal(vertex[a_point-1], vertex[b_point-1], vertex[c_point-1]);
             setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal, 0.0, 0.0, 0.0, 0.0);
             setFace(buffer, &j, &face_inc, vertex[b_point-1].x, vertex[b_point-1].y, vertex[b_point-1].z, rgbRand, rgbMtl, normal, 0.0, 1.0, 0.0, 0.0);
@@ -253,13 +253,24 @@ void parser(GLfloat **buffer, int *sizeMallocFaces, char *filename, t_obj_spec *
             setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgbRand, rgbMtl, normal, 0.0, 1.0, 0.0, 0.0);
             setFace(buffer, &j, &face_inc, vertex[d_point-1].x, vertex[d_point-1].y, vertex[d_point-1].z, rgbRand, rgbMtl, normal, 1.0, 1.0, 0.0, 0.0);
         }
+		// Contain 4 points/textures
+		else if (sscanf(linebuf, "f %d/%d %d/%d %d/%d %d/%d", &a_point, &a_normal, &b_point, &b_normal, &c_point, &c_normal, &d_point, &d_normal) == 8) {
+			checkObjValues((int[4]){a_point, b_point, c_point, d_point}, 4, vertex_inc);
+			checkObjValues((int[4]){a_normal, b_normal, c_normal, d_normal}, 4, vn_inc);
+			t_vec3 normal = getNormal(vertex[a_point-1], vertex[b_point-1], vertex[c_point-1]);
+            setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal, 0.0, 0.0, vertexTextureBuff[a_texture-1].x, vertexTextureBuff[a_texture-1].y);
+            setFace(buffer, &j, &face_inc, vertex[b_point-1].x, vertex[b_point-1].y, vertex[b_point-1].z, rgbRand, rgbMtl, normal, 0.0, 1.0, vertexTextureBuff[b_texture-1].x, vertexTextureBuff[b_texture-1].y);
+            setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgbRand, rgbMtl, normal, 1.0, 1.0, vertexTextureBuff[c_texture-1].x, vertexTextureBuff[c_texture-1].y);
+
+            normal = getNormal(vertex[a_point-1], vertex[c_point-1], vertex[d_point-1]);
+            setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal, 0.0, 0.0, vertexTextureBuff[a_texture-1].x, vertexTextureBuff[a_texture-1].y);
+            setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgbRand, rgbMtl, normal, 0.0, 1.0, vertexTextureBuff[c_texture-1].x, vertexTextureBuff[c_texture-1].y);
+            setFace(buffer, &j, &face_inc, vertex[d_point-1].x, vertex[d_point-1].y, vertex[d_point-1].z, rgbRand, rgbMtl, normal, 1.0, 1.0, vertexTextureBuff[d_texture-1].x, vertexTextureBuff[d_texture-1].y);
+        }
 		// Contain 4 points/normals
 		else if (sscanf(linebuf, "f %d//%d %d//%d %d//%d %d//%d", &a_point, &a_normal, &b_point, &b_normal, &c_point, &c_normal, &d_point, &d_normal) == 8) {
-			if (a_point > vertex_inc || b_point > vertex_inc || c_point > vertex_inc || d_point > vertex_inc ||
-			a_normal > vn_inc || b_normal > vn_inc || c_normal > vn_inc || d_normal > vn_inc) {
-				printf("\x1b[91mError obj file\x1b[0m\n");
-				exit(0);
-			}
+			checkObjValues((int[4]){a_point, b_point, c_point, d_point}, 4, vertex_inc);
+			checkObjValues((int[4]){a_normal, b_normal, c_normal, d_normal}, 4, vn_inc);
 			t_vec3 normal = fill_vec(-normalBuff[b_normal-1].x, -normalBuff[b_normal-1].y, -normalBuff[b_normal-1].z);
             setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal, 0.0, 0.0, 0.0, 0.0);
             setFace(buffer, &j, &face_inc, vertex[b_point-1].x, vertex[b_point-1].y, vertex[b_point-1].z, rgbRand, rgbMtl, normal, 0.0, 1.0, 0.0, 0.0);
@@ -270,14 +281,10 @@ void parser(GLfloat **buffer, int *sizeMallocFaces, char *filename, t_obj_spec *
             setFace(buffer, &j, &face_inc, vertex[c_point-1].x, vertex[c_point-1].y, vertex[c_point-1].z, rgbRand, rgbMtl, normal, 0.0, 1.0, 0.0, 0.0);
             setFace(buffer, &j, &face_inc, vertex[d_point-1].x, vertex[d_point-1].y, vertex[d_point-1].z, rgbRand, rgbMtl, normal, 1.0, 1.0, 0.0, 0.0);
         }
-		// Contain 4 points/textures
+		// Contain 3 points/textures/normals
 		else if (sscanf(linebuf, "f %d/%d/%d %d/%d/%d %d/%d/%d", &a_point, &a_texture, &a_normal, &b_point, &b_texture, &b_normal, &c_point, &c_texture, &c_normal) == 9) {
-			if (a_point > vertex_inc || b_point > vertex_inc || c_point > vertex_inc ||
-			a_texture > vt_inc || b_texture > vt_inc || c_texture > vt_inc ||
-			a_normal > vn_inc || b_normal > vn_inc || c_normal > vn_inc) {
-				printf("\x1b[91mError obj file\x1b[0m\n");
-				exit(0);
-			}
+			checkObjValues((int[3]){a_point, b_point, c_point}, 3, vertex_inc);
+			checkObjValues((int[3]){a_texture, b_texture, c_texture}, 3, vt_inc);
             t_vec3 normal = fill_vec(-normalBuff[a_normal-1].x, -normalBuff[a_normal-1].y, -normalBuff[a_normal-1].z);
             setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal, 0.0, 0.0, vertexTextureBuff[a_texture-1].x, vertexTextureBuff[a_texture-1].y);
             setFace(buffer, &j, &face_inc, vertex[b_point-1].x, vertex[b_point-1].y, vertex[b_point-1].z, rgbRand, rgbMtl, normal, 0.0, 1.0, vertexTextureBuff[b_texture-1].x, vertexTextureBuff[b_texture-1].y);
@@ -285,10 +292,7 @@ void parser(GLfloat **buffer, int *sizeMallocFaces, char *filename, t_obj_spec *
         }
 		// Contain 3 points
         else if (sscanf(linebuf, "f %d %d %d", &a_point, &b_point, &c_point) == 3) {
-			if (a_point > vertex_inc || b_point > vertex_inc || c_point > vertex_inc) {
-				printf("\x1b[91mError obj file\x1b[0m\n");
-				exit(0);
-			}
+			checkObjValues((int[3]){a_point, b_point, c_point}, 3, vertex_inc);
             t_vec3 normal = getNormal(vertex[a_point-1], vertex[b_point-1], vertex[c_point-1]);
             setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal, 0.0, 0.0, 0.0, 0.0);
             setFace(buffer, &j, &face_inc, vertex[b_point-1].x, vertex[b_point-1].y, vertex[b_point-1].z, rgbRand, rgbMtl, normal, 0.0, 1.0, 0.0, 0.0);
@@ -296,11 +300,8 @@ void parser(GLfloat **buffer, int *sizeMallocFaces, char *filename, t_obj_spec *
         }
 		// Contain 3 points/textures
         else if (sscanf(linebuf, "f %d/%d %d/%d %d/%d", &a_point, &a_texture, &b_point, &b_texture, &c_point, &c_texture) == 6) {
-			if (a_point > vertex_inc || b_point > vertex_inc || c_point > vertex_inc ||
-			a_texture > vt_inc || b_texture > vt_inc || c_texture > vt_inc) {
-				printf("\x1b[91mError obj file\x1b[0m\n");
-				exit(0);
-			}
+			checkObjValues((int[3]){a_point, b_point, c_point}, 3, vertex_inc);
+			checkObjValues((int[3]){a_texture, b_texture, c_texture}, 3, vt_inc);
             t_vec3 normal = getNormal(vertex[a_point-1], vertex[b_point-1], vertex[c_point-1]);
             setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal, 0.0, 0.0, 0.0, 0.0);
             setFace(buffer, &j, &face_inc, vertex[b_point-1].x, vertex[b_point-1].y, vertex[b_point-1].z, rgbRand, rgbMtl, normal, 0.0, 1.0, 0.0, 0.0);
@@ -308,11 +309,8 @@ void parser(GLfloat **buffer, int *sizeMallocFaces, char *filename, t_obj_spec *
         }
 		// Contain 3 points/normals
         else if (sscanf(linebuf, "f %d//%d %d//%d %d//%d", &a_point, &a_normal, &b_point, &b_normal, &c_point, &c_normal) == 6) {
-			if (a_point > vertex_inc || b_point > vertex_inc || c_point > vertex_inc ||
-			a_normal > vn_inc || b_normal > vn_inc || c_normal > vn_inc) {
-				printf("\x1b[91mError obj file\x1b[0m\n");
-				exit(0);
-			}
+			checkObjValues((int[3]){a_point, b_point, c_point}, 3, vertex_inc);
+			checkObjValues((int[3]){a_normal, b_normal, c_normal}, 3, vn_inc);
 			t_vec3 normal = fill_vec(-normalBuff[a_normal-1].x, -normalBuff[a_normal-1].y, -normalBuff[a_normal-1].z);
             setFace(buffer, &j, &face_inc, vertex[a_point-1].x, vertex[a_point-1].y, vertex[a_point-1].z, rgbRand, rgbMtl, normal, 0.0, 0.0, 0.0, 0.0);
             setFace(buffer, &j, &face_inc, vertex[b_point-1].x, vertex[b_point-1].y, vertex[b_point-1].z, rgbRand, rgbMtl, normal, 0.0, 1.0, 0.0, 0.0);
