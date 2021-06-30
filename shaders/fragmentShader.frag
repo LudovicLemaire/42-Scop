@@ -27,7 +27,6 @@ float specularShininess = 32;
 uniform sampler2D ourTexture;
 
 float noise( vec2 p ) {
-   	// e^pi (Gelfond's constant)
    	// 2^sqrt(2) (Gelfond–Schneider constant)
     vec2 K1 = vec2(23.14069263277926, 2.665144142690225 );
 
